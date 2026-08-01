@@ -1,138 +1,73 @@
-// --- Nexus Trading Platform - Chart Settings Modal Module ---
+document.addEventListener("DOMContentLoaded", () => {
+    // 1. Initial Load එකේදී Default Colors ඩීෆෝල්ට් සිලෙක්ට් වෙලා තියෙන්න දාන කොටස
+    const defaultSettings = {
+        upBody: "#2962ff",
+        downBody: "#000000",
+        upBorder: "#2962ff",
+        downBorder: "#000000",
+        upWick: "#2962ff",
+        downWick: "#000000"
+    };
 
-class ChartSettingsModal {
-    constructor() {
-        this.modalElement = null;
-        this.init();
-    }
+    // UI එකේ input සහ color swatch වලට මුල් අගයන් දීම
+    function initColorPickers() {
+        const colorMappings = [
+            { inputId: "tvUpBodyColor", value: defaultSettings.upBody },
+            { inputId: "tvDownBodyColor", value: defaultSettings.downBody },
+            { inputId: "tvUpBorderColor", value: defaultSettings.upBorder },
+            { inputId: "tvDownBorderColor", value: defaultSettings.downBorder },
+            { inputId: "tvUpWickColor", value: defaultSettings.upWick },
+            { inputId: "tvDownWickColor", value: defaultSettings.downWick }
+        ];
 
-    init() {
-        this.modalElement = document.getElementById('tradingViewSettingsModal');
-        
-        if (this.modalElement) {
-            this.modalElement.style.setProperty('display', 'none', 'important');
-        }
-
-        this.attachEventListeners();
-    }
-
-    attachEventListeners() {
-        const modal = this.modalElement;
-        if (!modal) return;
-
-        // 1. Open modal only when clicking "Settings" in top navigation
-        const mainSettingsNavBtn = document.getElementById('mainSettingsNavBtn');
-        if (mainSettingsNavBtn) {
-            mainSettingsNavBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.show();
-            });
-        }
-
-        // 2. Tab Switching logic inside modal
-        const tabs = modal.querySelectorAll('.tv-tab-item');
-        tabs.forEach(tab => {
-            tab.addEventListener('click', () => {
-                tabs.forEach(t => t.classList.remove('active'));
-                tab.classList.add('active');
-
-                const targetId = tab.getAttribute('data-target');
-                modal.querySelectorAll('.tv-panel-content').forEach(panel => {
-                    panel.classList.remove('active');
-                });
-                
-                const targetPanel = modal.querySelector(`#${targetId}`);
-                if (targetPanel) {
-                    targetPanel.classList.add('active');
+        colorMappings.forEach(item => {
+            const inputEl = document.getElementById(item.inputId);
+            if (inputEl) {
+                inputEl.value = item.value;
+                const swatch = inputEl.parentElement.querySelector(".tv-custom-color-swatch");
+                if (swatch) {
+                    swatch.style.backgroundColor = item.value;
                 }
-            });
-        });
-
-        // 3. Close / Cancel / OK / Cross Button Listeners
-        const closeModal = () => { 
-            modal.style.setProperty('display', 'none', 'important'); 
-        };
-
-        modal.addEventListener('click', (e) => {
-            const target = e.target;
-            const isCloseBtn = target.id === 'closeChartSettings' || 
-                               target.classList.contains('close-btn') || 
-                               target.classList.contains('tv-close-btn') ||
-                               target.id === 'tvCancelBtn' ||
-                               target.textContent.trim() === '×' ||
-                               target.closest('.tv-close-btn') ||
-                               target.closest('#closeChartSettings');
-
-            const isOkBtn = target.id === 'tvOkBtn' || target.closest('#tvOkBtn');
-
-            if (isCloseBtn || isOkBtn) {
-                e.preventDefault();
-                e.stopPropagation();
-                if (isOkBtn) {
-                    this.applySettingsToChart();
-                }
-                closeModal();
-            }
-        });
-
-        // Close when clicking outside modal container
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                closeModal();
             }
         });
     }
 
-    applySettingsToChart() {
-        if (!window.chart || !window.candlestickSeries) return;
+    initColorPickers();
 
-        // 1. Read values securely from inputs (with fallback selectors if IDs vary)
-        const upBodyInput = document.getElementById('tvUpBodyColor') || document.querySelector('#panel-symbol input[type="color"]');
-        const downBodyInput = document.querySelector('#tvDownBodyColor') || document.querySelectorAll('#panel-symbol input[type="color"]')[1];
-        
-        const vertGridToggle = document.getElementById('tvVertGridToggle') || document.getElementById('masterGridToggle');
-        const horzGridToggle = document.getElementById('tvHorzGridToggle');
-        const bgColorInput = document.getElementById('tvBgColor') || document.querySelector('#panel-canvas input[type="color"]');
-
-        // 2. Apply options to Lightweight Charts series & instance
-        const seriesOptions = {};
-        if (upBodyInput) {
-            seriesOptions.upColor = upBodyInput.value;
-            seriesOptions.borderUpColor = upBodyInput.value;
-            seriesOptions.wickUpColor = upBodyInput.value;
-        }
-        if (downBodyInput) {
-            seriesOptions.downColor = downBodyInput.value;
-            seriesOptions.borderDownColor = downBodyInput.value;
-            seriesOptions.wickDownColor = downBodyInput.value;
-        }
-
-        window.candlestickSeries.applyOptions(seriesOptions);
-
-        const chartOptions = {
-            grid: {
-                vertLines: { visible: vertGridToggle ? vertGridToggle.checked : true },
-                horzLines: { visible: horzGridToggle ? horzGridToggle.checked : true }
+    // 2. අපි වෙනස් කළාට පස්සේ (Change Event) පමණක් චාට් එකට පාට මාරු වෙන්න හදන කොටස
+    const colorInputs = document.querySelectorAll(".tv-native-color-input");
+    colorInputs.forEach(input => {
+        input.addEventListener("input", (e) => {
+            const selectedColor = e.target.value;
+            const swatch = e.target.parentElement.querySelector(".tv-custom-color-swatch");
+            
+            // Rounded box එකේ background එක ක්ෂණිකව අපේට් කිරීම
+            if (swatch) {
+                swatch.style.backgroundColor = selectedColor;
             }
-        };
+        });
 
-        if (bgColorInput) {
-            chartOptions.layout = {
-                background: { type: 'solid', color: bgColorInput.value }
-            };
+        // වෙනස්කම් ඉන්පුට් කරලා අවසන් වුණාම (Change) චාට් එකට පාට යැවීම
+        input.addEventListener("change", (e) => {
+            const colorId = e.target.id;
+            const newColor = e.target.value;
+            applyChartColorChange(colorId, newColor);
+        });
+    });
+
+    function applyChartColorChange(id, color) {
+        // මෙතැනදී ඔයාගේ Lightweight Charts වලට අදාළ වන Series එක Update කිරීමේ කෝඩ් එක ක්‍රියාත්මක වේ
+        if (typeof window.myChartSeries !== "undefined" && window.myChartSeries) {
+            // උදාහරණයක් ලෙස Candles options අප්ඩේට් කිරීම
+            let options = {};
+            if (id.includes("Body")) {
+                options = id.includes("Up") ? { upColor: color } : { downColor: color };
+            } else if (id.includes("Border")) {
+                options = id.includes("Up") ? { borderUpColor: color } : { borderDownColor: color };
+            } else if (id.includes("Wick")) {
+                options = id.includes("Up") ? { wickUpColor: color } : { wickDownColor: color };
+            }
+            window.myChartSeries.applyOptions(options);
         }
-
-        window.chart.applyOptions(chartOptions);
     }
-
-    show() {
-        if (this.modalElement) {
-            this.modalElement.style.setProperty('display', 'flex', 'important');
-        }
-    }
-}
-
-// Initialize and attach to global scope
-document.addEventListener('DOMContentLoaded', () => {
-    window.chartSettingsModal = new ChartSettingsModal();
 });
