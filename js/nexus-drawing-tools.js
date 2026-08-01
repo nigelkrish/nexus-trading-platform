@@ -4,6 +4,8 @@
 // උදාහරණයක් ලෙස: import { TrendlineTool } from './tools/trendline.js';
 // import { FibTool } from './tools/fibonacci.js';
 
+import { TrendToolsModule } from './tools/trend-tools.js';
+
 class NexusDrawingManager {
     constructor() {
         this.activeTool = 'cursor';
