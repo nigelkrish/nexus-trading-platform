@@ -1,4 +1,4 @@
-// --- Nexus Trading Platform - Advanced Drawing Manager (TradingView Style Ultimate Update) ---
+// --- Nexus Trading Platform - Advanced Drawing Manager (TradingView Style Add Text Update) ---
 
 class TrendToolsModule {
     constructor() {
@@ -110,7 +110,7 @@ class TrendToolsModule {
             ctx.lineTo(bX2, bY2);
             ctx.stroke();
 
-            // Middle Dashed Line (TradingView style precise center span)
+            // Middle Dashed Line
             ctx.save();
             ctx.strokeStyle = item.color || '#26a69a';
             ctx.setLineDash([4, 4]);
@@ -130,7 +130,7 @@ class TrendToolsModule {
             ctx.closePath();
             ctx.fill();
 
-            // Center Text for Parallel Channel
+            // Center Text for Parallel Channel (TradingView Style: Directly on Center Line)
             const midX = (item.x1 + item.x2 + bX1 + bX2) / 4;
             const midY = (item.y1 + item.y2 + bY1 + bY2) / 4;
             let angle = Math.atan2(item.y2 - item.y1, item.x2 - item.x1);
@@ -141,7 +141,7 @@ class TrendToolsModule {
             ctx.translate(midX, midY);
             ctx.rotate(angle);
             if (item.text) {
-                ctx.font = '12px Inter, sans-serif';
+                ctx.font = '11px Inter, sans-serif';
                 ctx.fillStyle = item.color || '#26a69a';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
@@ -156,7 +156,7 @@ class TrendToolsModule {
             ctx.restore();
         }
 
-        // Center Text Alignment for regular line tools (aligned perfectly with line direction)
+        // TradingView Style Center Text Alignment for regular lines (Directly on the line, baseline middle)
         if (item.subType !== 'parallelchannel') {
             const midX = (item.x1 + item.x2) / 2;
             const midY = (item.y1 + item.y2) / 2;
@@ -170,17 +170,17 @@ class TrendToolsModule {
             ctx.rotate(angle);
 
             if (item.text) {
-                ctx.font = '12px Inter, sans-serif';
+                ctx.font = '11px Inter, sans-serif';
                 ctx.fillStyle = item.color || '#26a69a';
                 ctx.textAlign = 'center';
-                ctx.textBaseline = 'bottom';
-                ctx.fillText(item.text, 0, -6);
+                ctx.textBaseline = 'middle';
+                ctx.fillText(item.text, 0, -10); // Exactly like TradingView offset
             } else if (isSelected) {
                 ctx.font = '11px Inter, sans-serif';
                 ctx.fillStyle = '#848e9c';
                 ctx.textAlign = 'center';
-                ctx.textBaseline = 'bottom';
-                ctx.fillText('+ Add text', 0, -6);
+                ctx.textBaseline = 'middle';
+                ctx.fillText('+ Add text', 0, -10);
             }
             ctx.restore();
         }
@@ -220,15 +220,6 @@ class TrendToolsModule {
             } else {
                 drawHandle(item.x1, item.y1, false);
                 drawHandle(item.x2, item.y2, false);
-
-                const midX = (item.x1 + item.x2) / 2;
-                const midY = (item.y1 + item.y2) / 2;
-                ctx.save();
-                ctx.strokeStyle = '#2962ff';
-                ctx.lineWidth = 1;
-                ctx.setLineDash([2, 2]);
-                ctx.strokeRect(midX - 35, midY - 18, 70, 24);
-                ctx.restore();
             }
         }
     }
@@ -396,7 +387,7 @@ class NexusDrawingManager {
         let currentDrawObj = null;
         let dragStartX = 0, dragStartY = 0;
 
-        // Double Click Event for TradingView-style Settings/Editing
+        // Double Click Event for Editing Text Directly (TradingView Style)
         canvas.ondblclick = (e) => {
             if (!this.isVisible || this.isLocked) return;
             const rect = canvas.getBoundingClientRect();
@@ -426,7 +417,13 @@ class NexusDrawingManager {
                     this.selectedDrawing = item;
                     this.showFloatingToolbar(item);
                     this.redrawCanvas();
-                    this.showSettingsModal(item, e.clientX, e.clientY);
+                    
+                    // Direct Inline Prompt for Text Editing on Double Click
+                    let newText = prompt('Enter text for this drawing:', item.text || '');
+                    if (newText !== null) {
+                        item.text = newText;
+                        this.redrawCanvas();
+                    }
                     break;
                 }
             }
@@ -441,23 +438,7 @@ class NexusDrawingManager {
             if (e.button === 2) {
                 e.preventDefault();
                 for (let item of this.drawings) {
-                    if (item.subType === 'parallelchannel') {
-                        if (item.yOffset === undefined) item.yOffset = 60;
-                        const bX1 = item.x1 + (item.channelShiftX || 0);
-                        const bY1 = item.y1 + item.yOffset;
-                        const bX2 = item.x2 + (item.channelShiftX || 0);
-                        const bY2 = item.y2 + item.yOffset;
-                        if (Math.hypot(mouseX - item.x1, mouseY - item.y1) < 15 || 
-                            Math.hypot(mouseX - item.x2, mouseY - item.y2) < 15 ||
-                            Math.hypot(mouseX - bX1, mouseY - bY1) < 15 ||
-                            Math.hypot(mouseX - bX2, mouseY - bY2) < 15) {
-                            this.selectedDrawing = item;
-                            this.showFloatingToolbar(item);
-                            this.redrawCanvas();
-                            this.showSettingsModal(item, e.clientX, e.clientY);
-                            break;
-                        }
-                    } else if (this.pDistance(mouseX, mouseY, item.x1, item.y1, item.x2, item.y2) < 10) {
+                    if (this.pDistance(mouseX, mouseY, item.x1, item.y1, item.x2, item.y2) < 12) {
                         this.selectedDrawing = item;
                         this.showFloatingToolbar(item);
                         this.redrawCanvas();
@@ -584,7 +565,6 @@ class NexusDrawingManager {
                     this.selectedDrawing.x2 = mouseX;
                     this.selectedDrawing.y2 = mouseY;
                 } else if (this.draggingHandle === 'pc_p3' || this.draggingHandle === 'pc_p4') {
-                    // Smooth Edge Drag for Parallel Channel Height
                     this.selectedDrawing.yOffset = mouseY - this.selectedDrawing.y1;
                     this.selectedDrawing.channelShiftX = mouseX - this.selectedDrawing.x1;
                 } else if (this.draggingHandle === 'move') {
