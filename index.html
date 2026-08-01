@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="si">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,12 +14,12 @@
         <div class="nav-left">
             <span class="logo">NEXUS PRO</span>
             <span class="status-dot online"></span>
-            <span class="status-text">සජීවීව සම්බන්ධයි</span>
+            <span class="status-text">Live Connected</span>
         </div>
         <div class="nav-center">
             <div class="symbol-selector">
                 <select id="symbolSelect">
-                    <optgroup label="රන් සහ ක්‍රිප්ටෝ (Binance)">
+                    <optgroup label="Gold & Crypto (Binance)">
                         <option value="PAXGUSDT">PAXG/USDT (Gold)</option>
                         <option value="BTCUSDT" selected>BTC/USDT</option>
                         <option value="ETHUSDT">ETH/USDT</option>
@@ -50,9 +50,9 @@
                 <span id="priceChangeDisplay" class="negative">-0.00%</span>
             </div>
             <nav class="nav-tabs">
-                <button class="tab-btn" data-tab="dashboard">ඩෑෂ්බෝඩ්</button>
-                <button class="tab-btn" data-tab="analysis">විශ්ලේෂණ</button>
-                <button class="tab-btn active" data-tab="settings" id="mainSettingsNavBtn">සැකසුම්</button>
+                <button class="tab-btn" data-tab="dashboard">Dashboard</button>
+                <button class="tab-btn" data-tab="analysis">Analysis</button>
+                <button class="tab-btn active" data-tab="settings" id="mainSettingsNavBtn">Settings</button>
             </nav>
         </div>
     </header>
@@ -72,19 +72,19 @@
             <!-- Bottom Order Flow / Power Widgets -->
             <div class="bottom-widgets">
                 <div class="widget-box">
-                    <h4>වෙළඳපල බලය (Market Power)</h4>
+                    <h4>Market Power</h4>
                     <div class="power-bar-container">
-                        <div class="power-label"><span>ගැනුම් (Buyers)</span><span id="buyersPercent">65%</span></div>
+                        <div class="power-label"><span>Buyers</span><span id="buyersPercent">65%</span></div>
                         <div class="progress-bar"><div id="buyersFill" class="fill-green" style="width: 65%;"></div></div>
-                        <div class="power-label"><span>විකුණුම් (Sellers)</span><span id="sellersPercent">35%</span></div>
+                        <div class="power-label"><span>Sellers</span><span id="sellersPercent">35%</span></div>
                         <div class="progress-bar"><div id="sellersFill" class="fill-red" style="width: 35%;"></div></div>
                     </div>
                 </div>
                 <div class="widget-box action-box">
-                    <h4>ඉක්මන් වෙළඳපල ක්‍රියාමාර්ග (Execution)</h4>
+                    <h4>Quick Execution</h4>
                     <div class="action-buttons">
-                        <button class="trade-btn buy-btn" id="longBtn">LONG (ගන්න)</button>
-                        <button class="trade-btn sell-btn" id="shortBtn">SHORT (විකුණන්න)</button>
+                        <button class="trade-btn buy-btn" id="longBtn">LONG</button>
+                        <button class="trade-btn sell-btn" id="shortBtn">SHORT</button>
                     </div>
                 </div>
             </div>
@@ -93,7 +93,7 @@
         <!-- Right Sidebar: Order Depth / Volume & Alerts -->
         <aside class="sidebar">
             <div class="sidebar-section">
-                <h3>වෙළඳපල ගැඹුර (Order Depth)</h3>
+                <h3>Order Depth</h3>
                 <div class="depth-table" id="orderDepthContainer">
                     <div class="depth-row ask"><span>2350.50</span><span>0.42</span></div>
                     <div class="depth-row ask"><span>2350.00</span><span>1.15</span></div>
@@ -107,28 +107,28 @@
 
             <!-- Price Alert Creation Section -->
             <div class="sidebar-section">
-                <h3>මිල ඇඟවීම් (Price Alerts)</h3>
+                <h3>Price Alerts</h3>
                 <div class="config-form">
-                    <label>ඉලක්කගත මිල (Target Price)</label>
-                    <input type="number" id="alertPriceInput" placeholder="ဥපද: 2350.00" step="0.1">
-                    <label>තත්ත්වය (Condition)</label>
+                    <label>Target Price</label>
+                    <input type="number" id="alertPriceInput" placeholder="Ex: 2350.00" step="0.1">
+                    <label>Condition</label>
                     <select id="alertConditionInput" style="width: 100%; padding: 8px; background: #1e222d; color: #d1d4dc; border: 1px solid #2a2e39; border-radius: 4px; margin-bottom: 10px;">
-                        <option value="ABOVE">මිල ඉහළ නංින විට (Above)</option>
-                        <option value="BELOW">මිල පහළ බසින විට (Below)</option>
+                        <option value="ABOVE">Price Above</option>
+                        <option value="BELOW">Price Below</option>
                     </select>
-                    <button class="save-btn" id="setAlertBtn">Alert එකක් සකසන්න</button>
+                    <button class="save-btn" id="setAlertBtn">Set Alert</button>
                 </div>
                 <div id="activeAlertsContainer" style="margin-top: 10px; max-height: 150px; overflow-y: auto;"></div>
             </div>
 
             <div class="sidebar-section">
-                <h3>වේදිකා වින්‍යාසය (Settings)</h3>
+                <h3>Platform Settings</h3>
                 <div class="config-form">
                     <label>Binance API Status</label>
                     <input type="text" id="mt5UrlInput" value="Connected (Active)" readonly>
-                    <label>ගිණුම් හැඳුනුම්පත (Account ID)</label>
+                    <label>Account ID</label>
                     <input type="text" id="mt5AccInput" placeholder="Nexus User ID" value="Rohan_Pro">
-                    <button class="save-btn" id="saveMt5Config">සැකසුම් සුරකින්න</button>
+                    <button class="save-btn" id="saveMt5Config">Save Settings</button>
                 </div>
             </div>
         </aside>
@@ -138,36 +138,36 @@
     <div id="masterSettingsModal" class="nexus-modal-overlay" style="display: none;">
         <div class="nexus-modal-content" style="width: 500px; max-height: 80vh; overflow-y: auto;">
             <div class="nexus-modal-header">
-                <h3>ප්‍රධාන සැකසුම් මධ්‍යස්ථානය (Master Settings)</h3>
+                <h3>Master Settings Center</h3>
                 <button id="closeMasterSettings" class="close-modal-btn">&times;</button>
             </div>
             <div class="nexus-modal-body">
-                <h4 style="color: #26a69a; margin-bottom: 10px; border-bottom: 1px solid #2a2e39; padding-bottom: 5px;">චාට් සැකසුම් (Chart Configuration)</h4>
+                <h4 style="color: #26a69a; margin-bottom: 10px; border-bottom: 1px solid #2a2e39; padding-bottom: 5px;">Chart Configuration</h4>
                 <div class="setting-item">
-                    <span>ග්‍රිඩ් රේඛා පෙන්වන්න (Grid Lines)</span>
+                    <span>Show Grid Lines</span>
                     <input type="checkbox" id="masterGridToggle" checked>
                 </div>
 
-                <h4 style="color: #26a69a; margin: 15px 0 10px 0; border-bottom: 1px solid #2a2e39; padding-bottom: 5px;">මොඩියුල සැකසුම් (Modules Control)</h4>
+                <h4 style="color: #26a69a; margin: 15px 0 10px 0; border-bottom: 1px solid #2a2e39; padding-bottom: 5px;">Modules Control</h4>
                 <div class="setting-item">
-                    <span>වැල මසුන්ගේ බුබුලු මොඩියුලය (Whale Bubbles)</span>
+                    <span>Whale Bubbles Module</span>
                     <input type="checkbox" id="masterWhaleToggle" checked>
                 </div>
                 <div class="setting-item">
-                    <span>වොলিউම් ප්‍රොෆයිල් මොඩියුලය (Volume Profile)</span>
+                    <span>Volume Profile Module</span>
                     <input type="checkbox" id="masterVolumeProfileToggle" checked>
                 </div>
                 <div class="setting-item">
-                    <span>අබ්සොප්ෂන් මොඩියුලය (Absorption Module)</span>
+                    <span>Absorption Module</span>
                     <input type="checkbox" id="masterAbsorptionToggle" checked>
                 </div>
                 <div class="setting-item">
-                    <span>ෆුට්ප්‍රින්ට් චාට් එක (Footprint Module)</span>
+                    <span>Footprint Chart Module</span>
                     <input type="checkbox" id="masterFootprintToggle" checked>
                 </div>
             </div>
             <div class="nexus-modal-footer">
-                <button id="saveMasterSettingsBtn" class="nexus-btn-primary">සියලු සැකසුම් සුරකින්න (Save All)</button>
+                <button id="saveMasterSettingsBtn" class="nexus-btn-primary">Save All Settings</button>
             </div>
         </div>
     </div>
