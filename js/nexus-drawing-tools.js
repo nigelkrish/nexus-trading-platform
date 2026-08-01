@@ -1,4 +1,4 @@
-// --- Nexus Trading Platform - Advanced Drawing Manager (TradingView Style with Handles, Text & Floating Toolbar) ---
+// --- Nexus Trading Platform - Advanced Drawing Manager (TradingView Style: Left-Click Edit + Right-Click Settings Panel) ---
 
 class TrendToolsModule {
     constructor() {
@@ -102,21 +102,28 @@ class TrendToolsModule {
             ctx.fillRect(Math.min(item.x1, item.x2), Math.min(item.y1, item.y1 + heightOffset), Math.abs(item.x2 - item.x1), Math.abs(heightOffset));
         }
 
-        // Render Text if available
+        // Render Text if available, otherwise show "Add text" placeholder when selected
+        const midX = (item.x1 + item.x2) / 2;
+        const midY = (item.y1 + item.y2) / 2;
+
         if (item.text) {
             ctx.save();
             ctx.font = '12px Inter, sans-serif';
             ctx.fillStyle = item.color || '#26a69a';
             ctx.textAlign = 'center';
-            const midX = (item.x1 + item.x2) / 2;
-            const midY = (item.y1 + item.y2) / 2 - 8;
-            ctx.fillText(item.text, midX, midY);
+            ctx.fillText(item.text, midX, midY - 8);
+            ctx.restore();
+        } else if (isSelected) {
+            ctx.save();
+            ctx.font = '11px Inter, sans-serif';
+            ctx.fillStyle = '#848e9c';
+            ctx.textAlign = 'center';
+            ctx.fillText('Add text', midX, midY - 8);
             ctx.restore();
         }
 
         // Render TradingView Style Selection Handles & Boxes
         if (isSelected) {
-            // Endpoints (Blue Circles)
             const drawHandle = (hx, hy) => {
                 ctx.save();
                 ctx.fillStyle = '#ffffff';
@@ -132,14 +139,12 @@ class TrendToolsModule {
             drawHandle(item.x1, item.y1);
             drawHandle(item.x2, item.y2);
 
-            // Middle Text Box Indicator (TradingView Style box on line center)
-            const midX = (item.x1 + item.x2) / 2;
-            const midY = (item.y1 + item.y2) / 2;
+            // Middle Text Box Indicator
             ctx.save();
             ctx.strokeStyle = '#2962ff';
             ctx.lineWidth = 1;
             ctx.setLineDash([2, 2]);
-            ctx.strokeRect(midX - 35, midY - 12, 70, 24);
+            ctx.strokeRect(midX - 35, midY - 18, 70, 24);
             ctx.restore();
         }
     }
@@ -154,7 +159,7 @@ class NexusDrawingManager {
         this.isVisible = true;
         this.drawings = [];
         this.selectedDrawing = null;
-        this.draggingHandle = null; // 'p1', 'p2', or 'move'
+        this.draggingHandle = null; 
         
         this.trendModule = new TrendToolsModule();
 
@@ -312,65 +317,78 @@ class NexusDrawingManager {
             const mouseX = e.clientX - rect.left;
             const mouseY = e.clientY - rect.top;
 
-            if (e.button === 2) { // Right Click
+            // --- RIGHT CLICK: Show Settings Panel ---
+            if (e.button === 2) {
                 e.preventDefault();
-                return;
-            }
-
-            if (this.activeTool === 'cursor') {
-                // Check if clicking on handles of selected drawing
-                if (this.selectedDrawing) {
-                    const distP1 = Math.hypot(mouseX - this.selectedDrawing.x1, mouseY - this.selectedDrawing.y1);
-                    const distP2 = Math.hypot(mouseX - this.selectedDrawing.x2, mouseY - this.selectedDrawing.y2);
-                    
-                    if (distP1 < 10) {
-                        this.draggingHandle = 'p1';
-                        return;
-                    } else if (distP2 < 10) {
-                        this.draggingHandle = 'p2';
-                        return;
-                    }
-
-                    // Check if clicking near middle text box area
-                    const midX = (this.selectedDrawing.x1 + this.selectedDrawing.x2) / 2;
-                    const midY = (this.selectedDrawing.y1 + this.selectedDrawing.y2) / 2;
-                    if (Math.abs(mouseX - midX) < 35 && Math.abs(mouseY - midY) < 12) {
-                        let newText = prompt('Enter text for this drawing:', this.selectedDrawing.text || '');
-                        if (newText !== null) {
-                            this.selectedDrawing.text = newText;
-                            this.redrawCanvas();
-                            this.showFloatingToolbar(this.selectedDrawing);
-                        }
-                        return;
-                    }
-                }
-
-                // Select drawing on click
-                let found = null;
                 for (let item of this.drawings) {
                     if (this.pDistance(mouseX, mouseY, item.x1, item.y1, item.x2, item.y2) < 10) {
-                        found = item;
+                        this.selectedDrawing = item;
+                        this.showFloatingToolbar(item);
+                        this.redrawCanvas();
+                        this.showSettingsModal(item, e.clientX, e.clientY);
                         break;
                     }
                 }
-
-                this.selectedDrawing = found;
-                if (this.selectedDrawing) {
-                    this.showFloatingToolbar(this.selectedDrawing);
-                    dragStartX = mouseX;
-                    dragStartY = mouseY;
-                    this.draggingHandle = 'move';
-                } else {
-                    this.removeFloatingToolbar();
-                }
-                this.redrawCanvas();
                 return;
             }
 
-            // New Drawing Creation
-            isDrawing = true;
-            startX = mouseX;
-            startY = mouseY;
+            // --- LEFT CLICK ---
+            if (e.button === 0) {
+                if (this.activeTool === 'cursor') {
+                    if (this.selectedDrawing) {
+                        const distP1 = Math.hypot(mouseX - this.selectedDrawing.x1, mouseY - this.selectedDrawing.y1);
+                        const distP2 = Math.hypot(mouseX - this.selectedDrawing.x2, mouseY - this.selectedDrawing.y2);
+                        
+                        if (distP1 < 10) {
+                            this.draggingHandle = 'p1';
+                            dragStartX = mouseX;
+                            dragStartY = mouseY;
+                            return;
+                        } else if (distP2 < 10) {
+                            this.draggingHandle = 'p2';
+                            dragStartX = mouseX;
+                            dragStartY = mouseY;
+                            return;
+                        }
+
+                        const midX = (this.selectedDrawing.x1 + this.selectedDrawing.x2) / 2;
+                        const midY = (this.selectedDrawing.y1 + this.selectedDrawing.y2) / 2;
+                        if (Math.abs(mouseX - midX) < 35 && Math.abs(mouseY - midY) < 12) {
+                            let newText = prompt('Enter text for this drawing:', this.selectedDrawing.text || '');
+                            if (newText !== null) {
+                                this.selectedDrawing.text = newText;
+                                this.redrawCanvas();
+                                this.showFloatingToolbar(this.selectedDrawing);
+                            }
+                            return;
+                        }
+                    }
+
+                    let found = null;
+                    for (let item of this.drawings) {
+                        if (this.pDistance(mouseX, mouseY, item.x1, item.y1, item.x2, item.y2) < 10) {
+                            found = item;
+                            break;
+                        }
+                    }
+
+                    this.selectedDrawing = found;
+                    if (this.selectedDrawing) {
+                        this.showFloatingToolbar(this.selectedDrawing);
+                        dragStartX = mouseX;
+                        dragStartY = mouseY;
+                        this.draggingHandle = 'move';
+                    } else {
+                        this.removeFloatingToolbar();
+                    }
+                    this.redrawCanvas();
+                    return;
+                }
+
+                isDrawing = true;
+                startX = mouseX;
+                startY = mouseY;
+            }
         };
 
         canvas.onmousemove = (e) => {
@@ -394,51 +412,18 @@ class NexusDrawingManager {
                     this.selectedDrawing.y1 += dy;
                     this.selectedDrawing.x2 += dx;
                     this.selectedDrawing.y2 += dy;
-                    dragStartX = mouseX;
-                    dragStartY = mouseY;
                 }
+                dragStartX = mouseX;
+                dragStartY = mouseY;
                 this.redrawCanvas();
                 return;
             }
         };
 
-        canvas.onmouseup = (e) => {
+        canvas.onmouseup = () => {
             this.draggingHandle = null;
             if (!isDrawing) return;
             isDrawing = false;
-            const rect = canvas.getBoundingClientRect();
-            const endX = e.clientX - rect.left;
-            const endY = e.clientY - rect.top;
-
-            if (this.activeTool !== 'cursor') {
-                const newObj = {
-                    id: Date.now(),
-                    type: this.activeTool,
-                    subType: this.activeTool === 'trendline' ? this.activeSubTool : this.activeTool,
-                    x1: startX, y1: startY,
-                    x2: endX, y2: endY,
-                    color: '#26a69a',
-                    width: 2,
-                    text: ''
-                };
-                this.drawings.push(newObj);
-                this.selectedDrawing = newObj;
-                this.showFloatingToolbar(newObj);
-                this.activeTool = 'cursor';
-                
-                // Reset toolbar active visual back to cursor
-                document.querySelectorAll('#nexusDrawingToolbar button').forEach(b => {
-                    b.style.background = 'transparent';
-                    b.style.color = '#d1d4dc';
-                });
-                const cursorBtn = document.getElementById('tool_cursor');
-                if (cursorBtn) {
-                    cursorBtn.style.background = '#26a69a';
-                    cursorBtn.style.color = '#ffffff';
-                }
-
-                this.redrawCanvas();
-            }
         };
 
         canvas.oncontextmenu = (e) => e.preventDefault();
@@ -452,7 +437,6 @@ class NexusDrawingManager {
         });
     }
 
-    // TradingView Style Floating Smooth Draggable Toolbar
     showFloatingToolbar(drawing) {
         this.removeFloatingToolbar();
 
@@ -467,7 +451,7 @@ class NexusDrawingManager {
 
         bar.innerHTML = `
             <span style="color: #848e9c; cursor: grab; font-size: 14px;" title="Drag Toolbar">⠿</span>
-            <input type="color" id="ftColor" value="${drawing.color}" style="border:none; width:22px; height:22px; background:none; cursor:pointer;" title="Change Color">
+            <input type="color" id="ftColor" value="${drawing.color || '#26a69a'}" style="border:none; width:22px; height:22px; background:none; cursor:pointer;" title="Change Color">
             <select id="ftWidth" style="background:#2a2e39; color:#fff; border:1px solid #363c4e; border-radius:4px; padding:2px 4px; font-size:12px;" title="Thickness">
                 <option value="1" ${drawing.width==1?'selected':''}>1px</option>
                 <option value="2" ${drawing.width==2?'selected':''}>2px</option>
@@ -475,13 +459,13 @@ class NexusDrawingManager {
                 <option value="4" ${drawing.width==4?'selected':''}>4px</option>
             </select>
             <button id="ftTextBtn" style="background:#2a2e39; color:#d1d4dc; border:1px solid #363c4e; border-radius:4px; padding:2px 6px; font-size:12px; cursor:pointer;" title="Add/Edit Text">T Text</button>
+            <button id="ftSettingsBtn" style="background:#2a2e39; color:#d1d4dc; border:1px solid #363c4e; border-radius:4px; padding:2px 6px; font-size:12px; cursor:pointer;" title="Settings Panel">⚙️</button>
             <div style="width:1px; height:16px; background:#363c4e;"></div>
             <button id="ftDel" style="background:transparent; border:none; color:#ef5350; cursor:pointer; font-size:14px;" title="Delete">🗑️</button>
         `;
 
         this.container.appendChild(bar);
 
-        // Smooth Dragging functionality for the Floating Toolbar itself
         let isDraggingBar = false;
         let startX, startY;
 
@@ -504,7 +488,6 @@ class NexusDrawingManager {
             bar.style.cursor = 'grab';
         };
 
-        // Event bindings for toolbar controls
         document.getElementById('ftColor').oninput = (e) => {
             drawing.color = e.target.value;
             this.redrawCanvas();
@@ -523,17 +506,100 @@ class NexusDrawingManager {
             }
         };
 
+        document.getElementById('ftSettingsBtn').onclick = (e) => {
+            const rect = e.target.getBoundingClientRect();
+            this.showSettingsModal(drawing, rect.left, rect.bottom + 10);
+        };
+
         document.getElementById('ftDel').onclick = () => {
             this.drawings = this.drawings.filter(d => d !== drawing);
             this.selectedDrawing = null;
             this.removeFloatingToolbar();
+            this.removeSettingsModal();
             this.redrawCanvas();
         };
+    }
+
+    showSettingsModal(drawing, posX, posY) {
+        this.removeSettingsModal();
+
+        const modal = document.createElement('div');
+        modal.id = 'nexusSettingsModal';
+        modal.style.cssText = `
+            position: fixed; left: ${Math.min(posX, window.innerWidth - 260)}px; top: ${Math.min(posY, window.innerHeight - 300)}px; z-index: 100000;
+            background: #1e222d; border: 1px solid #363c4e; border-radius: 8px; width: 240px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.6); padding: 14px; font-family: Inter, sans-serif; color: #d1d4dc; user-select: none;
+        `;
+
+        modal.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #363c4e; padding-bottom: 8px;">
+                <span style="font-weight: 600; font-size: 13px;">Drawing Settings</span>
+                <button id="closeModal" style="background:none; border:none; color:#848e9c; cursor:pointer; font-size:14px;">✕</button>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 10px; font-size: 12px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span>Line Color:</span>
+                    <input type="color" id="modalColor" value="${drawing.color || '#26a69a'}" style="border:none; width:28px; height:22px; background:none; cursor:pointer;">
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span>Line Thickness:</span>
+                    <select id="modalWidth" style="background:#2a2e39; color:#fff; border:1px solid #363c4e; border-radius:4px; padding:3px 6px;">
+                        <option value="1" ${drawing.width==1?'selected':''}>1px</option>
+                        <option value="2" ${drawing.width==2?'selected':''}>2px</option>
+                        <option value="3" ${drawing.width==3?'selected':''}>3px</option>
+                        <option value="4" ${drawing.width==4?'selected':''}>4px</option>
+                    </select>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 4px;">
+                    <span>Custom Text:</span>
+                    <input type="text" id="modalText" value="${drawing.text || ''}" placeholder="Enter text..." style="background:#2a2e39; color:#fff; border:1px solid #363c4e; border-radius:4px; padding:5px 8px; font-size:12px; outline:none;">
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        document.getElementById('closeModal').onclick = () => this.removeSettingsModal();
+
+        document.getElementById('modalColor').oninput = (e) => {
+            drawing.color = e.target.value;
+            const ftColor = document.getElementById('ftColor');
+            if (ftColor) ftColor.value = drawing.color;
+            this.redrawCanvas();
+        };
+
+        document.getElementById('modalWidth').onchange = (e) => {
+            drawing.width = parseInt(e.target.value);
+            const ftWidth = document.getElementById('ftWidth');
+            if (ftWidth) ftWidth.value = drawing.width;
+            this.redrawCanvas();
+        };
+
+        document.getElementById('modalText').oninput = (e) => {
+            drawing.text = e.target.value;
+            this.redrawCanvas();
+        };
+
+        // Close modal when clicking outside
+        setTimeout(() => {
+            window.addEventListener('click', function closeMod(evt) {
+                if (!modal.contains(evt.target) && !evt.target.closest('#nexusFloatingBar')) {
+                    modal.remove();
+                    window.removeEventListener('click', closeMod);
+                }
+            });
+        }, 100);
+    }
+
+    removeSettingsModal() {
+        const modal = document.getElementById('nexusSettingsModal');
+        if (modal) modal.remove();
     }
 
     removeFloatingToolbar() {
         const bar = document.getElementById('nexusFloatingBar');
         if (bar) bar.remove();
+        this.removeSettingsModal();
     }
 
     pDistance(x, y, x1, y1, x2, y2) {
