@@ -1,4 +1,4 @@
-// --- Nexus Trading Platform - Script.js (Master Settings Event Integration Fixed) ---
+// --- Nexus Trading Platform - Script.js (Instant Symbol Switch & Real-time Live Fix) ---
 
 let chart;
 let candlestickSeries;
@@ -19,12 +19,11 @@ let replayIndex = 0;
 let replayTimer = null;
 let isPlaying = false;
 
-// WebSocket Debounce & Instance State
-let wsDebounceTimer = null;
-let wsConnectionId = 0;
+// WebSocket Instance Control
+let activeWsConnectionId = 0;
 
 document.addEventListener('DOMContentLoaded', () => {
-    window.currentSymbol = currentSymbol; // Sync initial global symbol
+    window.currentSymbol = currentSymbol; 
     initChart();
     setupEventListeners();
     loadChartData(currentSymbol, currentTimeframe);
@@ -100,7 +99,7 @@ function initChart() {
         }
     });
 
-    // TradingView-style Right Click Menu Integration
+    // TradingView style Right Click Menu Integration
     container.addEventListener('contextmenu', (e) => {
         e.preventDefault();
         
@@ -123,7 +122,11 @@ function setupEventListeners() {
         symbolSelect.addEventListener('change', (e) => {
             currentSymbol = e.target.value;
             window.currentSymbol = currentSymbol;
-            document.getElementById('activeSymbolLabel').innerText = currentSymbol;
+            
+            // Update UI Labels instantly
+            const symbolLabel = document.getElementById('activeSymbolLabel');
+            if (symbolLabel) symbolLabel.innerText = currentSymbol;
+
             exitReplayMode();
             resetAndReload();
         });
@@ -136,7 +139,10 @@ function setupEventListeners() {
                 tfGroup.querySelectorAll('.tf-btn').forEach(b => b.classList.remove('active'));
                 e.target.classList.add('active');
                 currentTimeframe = e.target.getAttribute('data-tf');
-                document.getElementById('activeTimeframeLabel').innerText = currentTimeframe;
+                
+                const tfLabel = document.getElementById('activeTimeframeLabel');
+                if (tfLabel) tfLabel.innerText = currentTimeframe;
+
                 exitReplayMode();
                 resetAndReload();
             });
@@ -163,12 +169,12 @@ function setupEventListeners() {
             if (price && window.nexusAlerts) {
                 window.nexusAlerts.addAlert(currentSymbol, price, condition);
             } else {
-                alert('කරුණාකර නිවැරදි මිලක් ඇතුළත් කරන්න.');
+                alert('Please enter a valid price.');
             }
         });
     }
 
-    // --- Master Settings Modal & Top Navigation "සැකසුම්" Tab Integration ---
+    // Master Settings Modal & Top Navigation "Settings" Tab Integration
     const navTabs = document.querySelectorAll('.tab-btn');
     const masterModal = document.getElementById('masterSettingsModal');
     const closeMasterBtn = document.getElementById('closeMasterSettings');
@@ -181,7 +187,6 @@ function setupEventListeners() {
             navTabs.forEach(t => t.classList.remove('active'));
             e.target.classList.add('active');
 
-            // "සැකසුම්" ටැබ් එක ක්ලික් කළ විට Modal එක පෙන්වීම
             if (tabName === 'settings' && masterModal) {
                 masterModal.style.display = 'flex';
             }
@@ -202,7 +207,6 @@ function setupEventListeners() {
 
     if (saveMasterBtn && chart) {
         saveMasterBtn.addEventListener('click', () => {
-            // Chart Grid Settings
             const gridToggle = document.getElementById('masterGridToggle').checked;
             chart.applyOptions({
                 grid: {
@@ -211,7 +215,6 @@ function setupEventListeners() {
                 }
             });
 
-            // Modules Visibility Settings Control
             const whaleToggle = document.getElementById('masterWhaleToggle').checked;
             const volumeProfileToggle = document.getElementById('masterVolumeProfileToggle').checked;
             const absorptionToggle = document.getElementById('masterAbsorptionToggle').checked;
@@ -223,25 +226,25 @@ function setupEventListeners() {
             if (window.nexusFootprint) window.nexusFootprint.setVisibility(footprintToggle);
 
             masterModal.style.display = 'none';
-            alert('සියලු සැකසුම් සාර්ථකව සුරකින ලදී!');
+            alert('All settings saved successfully!');
         });
     }
 }
 
+// 3. Reset and Reload Chart Safely
 function resetAndReload() {
     oldestTimestamp = null;
     hasMoreData = true;
-    wsConnectionId++;
+    activeWsConnectionId++;
     
+    // Close existing WebSocket immediately
     if (ws) {
         try {
             ws.onopen = null;
             ws.onmessage = null;
             ws.onerror = null;
             ws.onclose = null;
-            if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
-                ws.close();
-            }
+            ws.close();
         } catch (e) {}
         ws = null;
     }
@@ -249,7 +252,7 @@ function resetAndReload() {
     loadChartData(currentSymbol, currentTimeframe);
 }
 
-// 3. Load Initial Historical Data
+// 4. Load Initial Historical Data
 async function loadChartData(symbol, timeframe) {
     try {
         window.currentSymbol = symbol;
@@ -273,6 +276,8 @@ async function loadChartData(symbol, timeframe) {
         if (!isReplayMode) {
             candlestickSeries.setData(formattedData);
             chart.timeScale().fitContent();
+            
+            // Connect to WebSocket immediately after setting historical data
             connectWebSocket(symbol, timeframe);
         }
 
@@ -284,7 +289,7 @@ async function loadChartData(symbol, timeframe) {
     }
 }
 
-// 4. Load More Historical Data (Lazy Loading)
+// 5. Load More Historical Data (Lazy Loading)
 async function loadMoreHistoricalData() {
     if (isLoadingMore || !hasMoreData || !oldestTimestamp || isReplayMode) return;
 
@@ -326,15 +331,9 @@ async function loadMoreHistoricalData() {
     }
 }
 
-// 5. WebSocket Realtime Ticks
+// 6. WebSocket Realtime Ticks (Instant Live Connection)
 function connectWebSocket(symbol, timeframe) {
-    if (wsDebounceTimer) {
-        clearTimeout(wsDebounceTimer);
-        wsDebounceTimer = null;
-    }
-
-    wsConnectionId++;
-    const currentId = wsConnectionId;
+    const connectionId = ++activeWsConnectionId;
 
     if (ws) {
         try {
@@ -342,60 +341,54 @@ function connectWebSocket(symbol, timeframe) {
             ws.onmessage = null;
             ws.onerror = null;
             ws.onclose = null;
-            if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
-                ws.close();
-            }
+            ws.close();
         } catch (e) {}
         ws = null;
     }
     
     if (isReplayMode) return;
 
-    wsDebounceTimer = setTimeout(() => {
-        if (isReplayMode || currentId !== wsConnectionId) return;
+    const wsUrl = `wss://stream.binance.com/ws/${symbol.toLowerCase()}@kline_${timeframe}`;
+    
+    try {
+        const socket = new WebSocket(wsUrl);
+        ws = socket;
 
-        const wsUrl = `wss://stream.binance.com/ws/${symbol.toLowerCase()}@kline_${timeframe}`;
-        
-        try {
-            const socket = new WebSocket(wsUrl);
-            ws = socket;
+        socket.onmessage = (event) => {
+            if (isReplayMode || ws !== socket || connectionId !== activeWsConnectionId) return;
+            
+            try {
+                const message = JSON.parse(event.data);
+                if (message.k) {
+                    const kline = message.k;
+                    const candleData = {
+                        time: kline.t / 1000,
+                        open: parseFloat(kline.o),
+                        high: parseFloat(kline.h),
+                        low: parseFloat(kline.l),
+                        close: parseFloat(kline.c)
+                    };
 
-            socket.onmessage = (event) => {
-                if (isReplayMode || ws !== socket || currentId !== wsConnectionId) return;
-                
-                try {
-                    const message = JSON.parse(event.data);
-                    if (message.k) {
-                        const kline = message.k;
-                        const candleData = {
-                            time: kline.t / 1000,
-                            open: parseFloat(kline.o),
-                            high: parseFloat(kline.h),
-                            low: parseFloat(kline.l),
-                            close: parseFloat(kline.c)
-                        };
+                    candlestickSeries.update(candleData);
+                    updatePriceDisplay(candleData.close, candleData.open);
 
-                        candlestickSeries.update(candleData);
-                        updatePriceDisplay(candleData.close, candleData.open);
-
-                        if (window.nexusAlerts) {
-                            window.nexusAlerts.checkAlerts(candleData.close, currentSymbol);
-                        }
+                    if (window.nexusAlerts) {
+                        window.nexusAlerts.checkAlerts(candleData.close, currentSymbol);
                     }
-                } catch (err) {}
-            };
-
-            socket.onerror = () => {};
-
-            socket.onclose = () => {
-                if (ws === socket) {
-                    ws = null;
                 }
-            };
-        } catch (err) {
-            console.error('WebSocket connection error:', err);
-        }
-    }, 250);
+            } catch (err) {}
+        };
+
+        socket.onerror = () => {};
+
+        socket.onclose = () => {
+            if (ws === socket) {
+                ws = null;
+            }
+        };
+    } catch (err) {
+        console.error('WebSocket connection error:', err);
+    }
 }
 
 // --- Bar Replay Interactive Functions ---
@@ -405,32 +398,28 @@ function promptReplaySelection() {
 
     isSelectingReplayPoint = true;
     document.body.style.cursor = 'crosshair';
-    alert('කරුණාකර චාට් එක මත Replay පටන් ගැනීමට අවශ්‍ය කැන්ඩ්ල් එකක් මත ක්ලික් කරන්න.');
+    alert('Please click on a candle on the chart to start Replay from that point.');
 }
 
 function activateReplayFromIndex(index) {
     isReplayMode = true;
-    wsConnectionId++;
+    activeWsConnectionId++;
 
-    if (wsDebounceTimer) {
-        clearTimeout(wsDebounceTimer);
-        wsDebounceTimer = null;
-    }
     if (ws) {
         try {
             ws.onopen = null;
             ws.onmessage = null;
             ws.onerror = null;
             ws.onclose = null;
-            if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
-                ws.close();
-            }
+            ws.close();
         } catch (e) {}
         ws = null;
     }
 
-    document.getElementById('replayToggleBtn').style.display = 'none';
-    document.getElementById('replayActionButtons').style.display = 'flex';
+    const toggleBtn = document.getElementById('replayToggleBtn');
+    const actionBtns = document.getElementById('replayActionButtons');
+    if (toggleBtn) toggleBtn.style.display = 'none';
+    if (actionBtns) actionBtns.style.display = 'flex';
 
     replayIndex = index;
     const initialReplaySlice = fullHistoricalData.slice(0, replayIndex + 1);
@@ -452,7 +441,7 @@ function replayStepForward() {
         }
     } else {
         stopReplayPlay();
-        alert('Replay අවසන් විය!');
+        alert('Replay finished!');
     }
 }
 
@@ -505,7 +494,7 @@ function exitReplayMode() {
     connectWebSocket(currentSymbol, currentTimeframe);
 }
 
-// 6. UI Price Badge Helper
+// 7. UI Price Badge Helper
 function updatePriceDisplay(currentPrice, openPrice) {
     const priceDisplay = document.getElementById('currentPriceDisplay');
     const changeDisplay = document.getElementById('priceChangeDisplay');
