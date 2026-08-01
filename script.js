@@ -1,4 +1,4 @@
-// --- Nexus Trading Platform - Script.js (Fully Fixed & Optimized with Modular Context Menu) ---
+// --- Nexus Trading Platform - Script.js (Fully Fixed & Optimized with Chart Settings Modal Logic) ---
 
 let chart;
 let candlestickSeries;
@@ -43,8 +43,8 @@ function initChart() {
             textColor: '#d1d4dc',
         },
         grid: {
-            vertLines: { color: '#1f293d' },
-            horzLines: { color: '#1f293d' },
+            vertLines: { color: '#1f293d', visible: true },
+            horzLines: { color: '#1f293d', visible: true },
         },
         crosshair: {
             mode: LightweightCharts.CrosshairMode.Normal,
@@ -177,6 +177,47 @@ function setupEventListeners() {
             } else {
                 alert('කරුණාකර නිවැරදි මිලක් ඇතුළත් කරන්න.');
             }
+        });
+    }
+
+    // --- Chart Settings Modal Interactions ---
+    const settingsBtn = document.getElementById('mainChartSettingsBtn');
+    const settingsModal = document.getElementById('chartSettingsModal');
+    const closeSettingsBtn = document.getElementById('closeChartSettings');
+    const saveSettingsBtn = document.getElementById('saveChartSettingsBtn');
+
+    if (settingsBtn && settingsModal) {
+        settingsBtn.addEventListener('click', () => {
+            settingsModal.style.display = 'flex';
+        });
+    }
+
+    if (closeSettingsBtn && settingsModal) {
+        closeSettingsBtn.addEventListener('click', () => {
+            settingsModal.style.display = 'none';
+        });
+    }
+
+    // Close modal when clicking outside of content
+    window.addEventListener('click', (e) => {
+        if (e.target === settingsModal) {
+            settingsModal.style.display = 'none';
+        }
+    });
+
+    if (saveSettingsBtn && chart) {
+        saveSettingsBtn.addEventListener('click', () => {
+            const gridToggle = document.getElementById('settingGridToggle').checked;
+            
+            // Apply Grid lines visibility settings to chart
+            chart.applyOptions({
+                grid: {
+                    vertLines: { visible: gridToggle, color: '#1f293d' },
+                    horzLines: { visible: gridToggle, color: '#1f293d' }
+                }
+            });
+
+            settingsModal.style.display = 'none';
         });
     }
 }

@@ -26,6 +26,127 @@ body {
     overflow: hidden;
 }
 
+/* Top Right Control & Settings Icon */
+.top-right-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.chart-settings-icon-btn {
+    background: transparent;
+    border: 1px solid #2a2e39;
+    color: #9598a1;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.chart-settings-icon-btn:hover {
+    background: #1e222d;
+    color: #2962ff;
+    border-color: #2962ff;
+}
+
+/* Modal Popup Styles */
+.nexus-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.nexus-modal-content {
+    background: #131722;
+    border: 1px solid #2a2e39;
+    border-width: 1px;
+    border-radius: 8px;
+    width: 400px;
+    max-width: 90%;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    color: #d1d4dc;
+}
+
+.nexus-modal-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid #2a2e39;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.nexus-modal-header h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.close-modal-btn {
+    background: none;
+    border: none;
+    color: #9598a1;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.close-modal-btn:hover {
+    color: #fff;
+}
+
+.nexus-modal-body {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.setting-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+}
+
+.nexus-select {
+    background: #1e222d;
+    border: 1px solid #2a2e39;
+    color: #d1d4dc;
+    padding: 6px 10px;
+    border-radius: 4px;
+}
+
+.nexus-modal-footer {
+    padding: 12px 20px;
+    border-top: 1px solid #2a2e39;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.nexus-btn-primary {
+    background: #2962ff;
+    color: #fff;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.nexus-btn-primary:hover {
+    background: #1e53db;
+}
+
 /* Top Navigation */
 .top-nav {
     height: 55px;
