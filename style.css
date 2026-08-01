@@ -570,3 +570,51 @@ select:hover, input:hover { border-color: var(--text-secondary); }
     z-index: 1000000 !important;
     pointer-events: auto !important;
 }
+
+/* --- TradingView Style Color Pickers --- */
+.tv-color-pickers-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.tv-color-row {
+    display: flex;
+    gap: 12px;
+}
+
+.tv-color-box-wrapper {
+    position: relative;
+    width: 32px;
+    height: 24px;
+    cursor: pointer;
+    display: inline-block;
+}
+
+/* Hide native ugly color input but keep functionality */
+.tv-native-color-input {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+    z-index: 2;
+}
+
+/* Custom TradingView-like sleek visual swatch box */
+.tv-custom-color-swatch {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    transition: all 0.2s ease;
+}
+
+.tv-color-box-wrapper:hover .tv-custom-color-swatch {
+    border-color: #2962ff;
+    box-shadow: 0 0 0 1px #2962ff;
+}

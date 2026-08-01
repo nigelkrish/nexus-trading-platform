@@ -103,7 +103,7 @@
                     <div class="depth-row bid"><span>2348.50</span><span>0.90</span></div>
                     <div class="depth-row bid"><span>2347.10</span><span>1.45</span></div>
                 </div>
-            </div>
+          </div>
 
             <!-- Price Alert Creation Section -->
             <div class="sidebar-section">
@@ -134,7 +134,7 @@
         </aside>
     </div>
 
-    <!-- TradingView Style Master Settings Modal (Updated with all requested modules) -->
+    <!-- TradingView Style Master Settings Modal (Updated with TradingView Style Color Pickers) -->
     <div id="tradingViewSettingsModal" class="tv-modal-overlay" style="display: none;">
         <div class="tv-modal-container">
             <!-- Header -->
@@ -172,31 +172,55 @@
                 <!-- Right Content Panels -->
                 <div class="tv-content-panels">
                     
-                    <!-- 1. Symbol Panel -->
+                    <!-- 1. Symbol Panel (Updated with TradingView Style Swatches) -->
                     <div class="tv-panel-content active" id="panel-symbol">
                         <h3>CANDLES</h3>
                         <div class="tv-control-row">
                             <label><input type="checkbox" id="chkColorPrevClose"> Color bars based on previous close</label>
                         </div>
-                        <div class="tv-control-row">
-                            <label><input type="checkbox" id="chkBody" checked> Body</label>
-                            <div style="display: flex; gap: 8px;">
-                                <input type="color" value="#2962ff" class="tv-color-input">
-                                <input type="color" value="#000000" class="tv-color-input">
+
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-top: 10px;">
+                            <div style="display: flex; flex-direction: column; gap: 12px;">
+                                <label><input type="checkbox" id="chkBody" checked> Body</label>
+                                <label><input type="checkbox" id="chkBorders" checked> Borders</label>
+                                <label><input type="checkbox" id="chkWick" checked> Wick</label>
                             </div>
-                        </div>
-                        <div class="tv-control-row">
-                            <label><input type="checkbox" id="chkBorders" checked> Borders</label>
-                            <div style="display: flex; gap: 8px;">
-                                <input type="color" value="#2962ff" class="tv-color-input">
-                                <input type="color" value="#000000" class="tv-color-input">
-                            </div>
-                        </div>
-                        <div class="tv-control-row">
-                            <label><input type="checkbox" id="chkWick" checked> Wick</label>
-                            <div style="display: flex; gap: 8px;">
-                                <input type="color" value="#2962ff" class="tv-color-input">
-                                <input type="color" value="#000000" class="tv-color-input">
+
+                            <!-- Sleek TradingView Style Color Pickers Grid -->
+                            <div class="tv-color-pickers-grid" style="display: flex; flex-direction: column; gap: 8px; margin-right: 40px;">
+                                <!-- Body Color Row -->
+                                <div class="tv-color-row" style="display: flex; gap: 12px;">
+                                    <label class="tv-color-box-wrapper" style="position:relative; width:32px; height:24px; cursor:pointer;">
+                                        <input type="color" id="tvUpBodyColor" value="#2962ff" class="tv-native-color-input" style="position:absolute; width:100%; height:100%; opacity:0; cursor:pointer; z-index:2;">
+                                        <span class="tv-custom-color-swatch" style="position:absolute; top:0; left:0; width:100%; height:100%; background-color:#2962ff; border-radius:4px; border:1px solid rgba(255,255,255,0.2);"></span>
+                                    </label>
+                                    <label class="tv-color-box-wrapper" style="position:relative; width:32px; height:24px; cursor:pointer;">
+                                        <input type="color" id="tvDownBodyColor" value="#000000" class="tv-native-color-input" style="position:absolute; width:100%; height:100%; opacity:0; cursor:pointer; z-index:2;">
+                                        <span class="tv-custom-color-swatch" style="position:absolute; top:0; left:0; width:100%; height:100%; background-color:#000000; border-radius:4px; border:1px solid rgba(255,255,255,0.2);"></span>
+                                    </label>
+                                </div>
+                                <!-- Border Color Row -->
+                                <div class="tv-color-row" style="display: flex; gap: 12px;">
+                                    <label class="tv-color-box-wrapper" style="position:relative; width:32px; height:24px; cursor:pointer;">
+                                        <input type="color" id="tvUpBorderColor" value="#2962ff" class="tv-native-color-input" style="position:absolute; width:100%; height:100%; opacity:0; cursor:pointer; z-index:2;">
+                                        <span class="tv-custom-color-swatch" style="position:absolute; top:0; left:0; width:100%; height:100%; background-color:#2962ff; border-radius:4px; border:1px solid rgba(255,255,255,0.2);"></span>
+                                    </label>
+                                    <label class="tv-color-box-wrapper" style="position:relative; width:32px; height:24px; cursor:pointer;">
+                                        <input type="color" id="tvDownBorderColor" value="#000000" class="tv-native-color-input" style="position:absolute; width:100%; height:100%; opacity:0; cursor:pointer; z-index:2;">
+                                        <span class="tv-custom-color-swatch" style="position:absolute; top:0; left:0; width:100%; height:100%; background-color:#000000; border-radius:4px; border:1px solid rgba(255,255,255,0.2);"></span>
+                                    </label>
+                                </div>
+                                <!-- Wick Color Row -->
+                                <div class="tv-color-row" style="display: flex; gap: 12px;">
+                                    <label class="tv-color-box-wrapper" style="position:relative; width:32px; height:24px; cursor:pointer;">
+                                        <input type="color" id="tvUpWickColor" value="#2962ff" class="tv-native-color-input" style="position:absolute; width:100%; height:100%; opacity:0; cursor:pointer; z-index:2;">
+                                        <span class="tv-custom-color-swatch" style="position:absolute; top:0; left:0; width:100%; height:100%; background-color:#2962ff; border-radius:4px; border:1px solid rgba(255,255,255,0.2);"></span>
+                                    </label>
+                                    <label class="tv-color-box-wrapper" style="position:relative; width:32px; height:24px; cursor:pointer;">
+                                        <input type="color" id="tvDownWickColor" value="#000000" class="tv-native-color-input" style="position:absolute; width:100%; height:100%; opacity:0; cursor:pointer; z-index:2;">
+                                        <span class="tv-custom-color-swatch" style="position:absolute; top:0; left:0; width:100%; height:100%; background-color:#000000; border-radius:4px; border:1px solid rgba(255,255,255,0.2);"></span>
+                                    </label>
+                                </div>
                             </div>
                         </div>
 
