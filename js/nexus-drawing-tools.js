@@ -1,4 +1,4 @@
-// --- Nexus Trading Platform - Advanced Drawing Manager (TradingView Style Parallel Channel & Rotated Text) ---
+// --- Nexus Trading Platform - Advanced Drawing Manager (Fixed Parallel Channel & Handles) ---
 
 class TrendToolsModule {
     constructor() {
@@ -91,7 +91,7 @@ class TrendToolsModule {
             ctx.stroke();
         }
         else if (item.subType === 'parallelchannel') {
-            if (item.yOffset === undefined) item.yOffset = 60; // Default channel height offset
+            if (item.yOffset === undefined) item.yOffset = 60;
             
             // Top Line
             ctx.beginPath();
@@ -126,7 +126,7 @@ class TrendToolsModule {
             ctx.fill();
         }
 
-        // --- TradingView Style Rotated & Aligned Text Rendering (For non-channels or general use) ---
+        // --- TradingView Style Rotated & Aligned Text Rendering ---
         if (item.subType !== 'parallelchannel') {
             const midX = (item.x1 + item.x2) / 2;
             const midY = (item.y1 + item.y2) / 2;
@@ -176,12 +176,10 @@ class TrendToolsModule {
 
             if (item.subType === 'parallelchannel') {
                 if (item.yOffset === undefined) item.yOffset = 60;
-                // Top line handles (P1, Center-Top, P2)
                 drawHandle(item.x1, item.y1, false);
                 drawHandle((item.x1 + item.x2) / 2, (item.y1 + item.y2) / 2, true);
                 drawHandle(item.x2, item.y2, false);
 
-                // Bottom line handles (P3, Center-Bottom, P4)
                 drawHandle(item.x1, item.y1 + item.yOffset, false);
                 drawHandle((item.x1 + item.x2) / 2, (item.y1 + item.y2) / 2 + item.yOffset, true);
                 drawHandle(item.x2, item.y2 + item.yOffset, false);
@@ -375,10 +373,11 @@ class NexusDrawingManager {
                 e.preventDefault();
                 for (let item of this.drawings) {
                     if (item.subType === 'parallelchannel') {
-                        if (Math.hypot(mouseX - item.x1, mouseY - item.y1) < 10 || 
-                            Math.hypot(mouseX - item.x2, mouseY - item.y2) < 10 ||
-                            Math.hypot(mouseX - item.x1, mouseY - (item.y1 + item.yOffset)) < 10 ||
-                            Math.hypot(mouseX - item.x2, mouseY - (item.y2 + item.yOffset)) < 10) {
+                        if (item.yOffset === undefined) item.yOffset = 60;
+                        if (Math.hypot(mouseX - item.x1, mouseY - item.y1) < 15 || 
+                            Math.hypot(mouseX - item.x2, mouseY - item.y2) < 15 ||
+                            Math.hypot(mouseX - item.x1, mouseY - (item.y1 + item.yOffset)) < 15 ||
+                            Math.hypot(mouseX - item.x2, mouseY - (item.y2 + item.yOffset)) < 15) {
                             this.selectedDrawing = item;
                             this.showFloatingToolbar(item);
                             this.redrawCanvas();
@@ -401,18 +400,18 @@ class NexusDrawingManager {
                 if (this.activeTool === 'cursor') {
                     if (this.selectedDrawing) {
                         if (this.selectedDrawing.subType === 'parallelchannel') {
-                            if (item.yOffset === undefined) item.yOffset = 60;
+                            if (this.selectedDrawing.yOffset === undefined) this.selectedDrawing.yOffset = 60;
                             const hDistP1 = Math.hypot(mouseX - this.selectedDrawing.x1, mouseY - this.selectedDrawing.y1);
                             const hDistP2 = Math.hypot(mouseX - this.selectedDrawing.x2, mouseY - this.selectedDrawing.y2);
                             const hDistP3 = Math.hypot(mouseX - this.selectedDrawing.x1, mouseY - (this.selectedDrawing.y1 + this.selectedDrawing.yOffset));
                             const hDistP4 = Math.hypot(mouseX - this.selectedDrawing.x2, mouseY - (this.selectedDrawing.y2 + this.selectedDrawing.yOffset));
-                            const hDistResize = Math.hypot(mouseX - (this.selectedDrawing.x1 + this.selectedDrawing.x2)/2, mouseY - (this.selectedDrawing.y1 + this.selectedDrawing.y2)/2 - this.selectedDrawing.yOffset/2);
+                            const hDistResize = Math.hypot(mouseX - (this.selectedDrawing.x1 + this.selectedDrawing.x2)/2, mouseY - ((this.selectedDrawing.y1 + this.selectedDrawing.y2)/2 + this.selectedDrawing.yOffset/2));
 
-                            if (hDistP1 < 10) { this.draggingHandle = 'pc_p1'; dragStartX = mouseX; dragStartY = mouseY; return; }
-                            if (hDistP2 < 10) { this.draggingHandle = 'pc_p2'; dragStartX = mouseX; dragStartY = mouseY; return; }
-                            if (hDistP3 < 10) { this.draggingHandle = 'pc_p3'; dragStartX = mouseX; dragStartY = mouseY; return; }
-                            if (hDistP4 < 10) { this.draggingHandle = 'pc_p4'; dragStartX = mouseX; dragStartY = mouseY; return; }
-                            if (hDistResize < 12) { this.draggingHandle = 'pc_resize'; dragStartX = mouseX; dragStartY = mouseY; return; }
+                            if (hDistP1 < 12) { this.draggingHandle = 'pc_p1'; dragStartX = mouseX; dragStartY = mouseY; return; }
+                            if (hDistP2 < 12) { this.draggingHandle = 'pc_p2'; dragStartX = mouseX; dragStartY = mouseY; return; }
+                            if (hDistP3 < 12) { this.draggingHandle = 'pc_p3'; dragStartX = mouseX; dragStartY = mouseY; return; }
+                            if (hDistP4 < 12) { this.draggingHandle = 'pc_p4'; dragStartX = mouseX; dragStartY = mouseY; return; }
+                            if (hDistResize < 15) { this.draggingHandle = 'pc_resize'; dragStartX = mouseX; dragStartY = mouseY; return; }
                         } else {
                             const distP1 = Math.hypot(mouseX - this.selectedDrawing.x1, mouseY - this.selectedDrawing.y1);
                             const distP2 = Math.hypot(mouseX - this.selectedDrawing.x2, mouseY - this.selectedDrawing.y2);
