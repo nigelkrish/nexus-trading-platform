@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus Trading Platform</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- TradingView Lightweight Charts Library v4 -->
+    <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
+</head>
+<body>
+    <!-- Top Navigation -->
+    <header class="top-nav">
+        <div class="nav-left">
+            <span class="logo">NEXUS PRO</span>
+            <span class="status-dot online"></span>
+            <span class="status-text">සජීවීව සම්බන්ධයි</span>
+        </div>
+        <div class="nav-center">
+            <div class="symbol-selector">
+                <select id="symbolSelect">
+                    <optgroup label="රන් සහ ක්‍රිප්ටෝ (Binance)">
+                        <option value="PAXGUSDT" selected>PAXG/USDT (Gold)</option>
+                        <option value="BTCUSDT">BTC/USDT</option>
+                        <option value="ETHUSDT">ETH/USDT</option>
+                    </optgroup>
+                </select>
+            </div>
+            <div class="timeframe-selector" id="timeframeGroup">
+                <button class="tf-btn active" data-tf="1m">1m</button>
+                <button class="tf-btn" data-tf="5m">5m</button>
+                <button class="tf-btn" data-tf="15m">15m</button>
+                <button class="tf-btn" data-tf="1h">1h</button>
+                <button class="tf-btn" data-tf="4h">4h</button>
+                <button class="tf-btn" data-tf="1D">1D</button>
+            </div>
+            <!-- Bar Replay Controls -->
+            <div class="replay-controls" style="display: flex; align-items: center; gap: 8px; margin-left: 15px;">
+                <button id="replayToggleBtn" class="tf-btn" style="background: #2a2e39; color: #d1d4dc;">Replay</button>
+                <div id="replayActionButtons" style="display: none; gap: 5px;">
+                    <button id="replayStepBtn" class="tf-btn" title="Next Candle">▶</button>
+                    <button id="replayPlayBtn" class="tf-btn" title="Play / Pause">⏯</button>
+                    <button id="replayExitBtn" class="tf-btn" style="color: #ef5350;" title="Exit Replay">✖</button>
+                </div>
+            </div>
+        </div>
+        <div class="nav-right">
+            <div class="live-price-badge">
+                <span id="currentPriceDisplay">0.00</span>
+                <span id="priceChangeDisplay" class="positive">+0.00%</span>
+            </div>
+            <nav class="nav-tabs">
+                <button class="tab-btn active" data-tab="dashboard">ඩෑෂ්බෝඩ්</button>
+                <button class="tab-btn" data-tab="analysis">විශ්ලේෂණ</button>
+                <button class="tab-btn" data-tab="settings">සැකසුම්</button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content Layout -->
+    <div class="main-container">
+        <!-- Left/Center: Chart & Widgets Area -->
+        <div class="workspace">
+            <div class="chart-panel">
+                <div class="chart-header">
+                    <span id="activeSymbolLabel">PAXGUSDT</span>
+                    <span id="activeTimeframeLabel">1m</span>
+                </div>
+                <div id="chartContainer"></div>
+            </div>
+
+            <!-- Bottom Order Flow / Power Widgets -->
+            <div class="bottom-widgets">
+                <div class="widget-box">
+                    <h4>වෙළඳපල බලය (Market Power)</h4>
+                    <div class="power-bar-container">
+                        <div class="power-label"><span>ගැනුම් (Buyers)</span><span id="buyersPercent">65%</span></div>
+                        <div class="progress-bar"><div id="buyersFill" class="fill-green" style="width: 65%;"></div></div>
+                        <div class="power-label"><span>විකුණුම් (Sellers)</span><span id="sellersPercent">35%</span></div>
+                        <div class="progress-bar"><div id="sellersFill" class="fill-red" style="width: 35%;"></div></div>
+                    </div>
+                </div>
+                <div class="widget-box action-box">
+                    <h4>ඉක්මන් වෙළඳපල ක්‍රියාමාර්ග (Execution)</h4>
+                    <div class="action-buttons">
+                        <button class="trade-btn buy-btn" id="longBtn">LONG (ගන්න)</button>
+                        <button class="trade-btn sell-btn" id="shortBtn">SHORT (විකුණන්න)</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Sidebar: Order Depth / Volume & Alerts -->
+        <aside class="sidebar">
+            <div class="sidebar-section">
+                <h3>වෙළඳපල ගැඹුර (Order Depth)</h3>
+                <div class="depth-table" id="orderDepthContainer">
+                    <div class="depth-row ask"><span>2350.50</span><span>0.42</span></div>
+                    <div class="depth-row ask"><span>2350.00</span><span>1.15</span></div>
+                    <div class="depth-row ask"><span>2349.20</span><span>0.85</span></div>
+                    <div class="depth-spread">Spread: 0.20</div>
+                    <div class="depth-row bid"><span>2349.00</span><span>2.30</span></div>
+                    <div class="depth-row bid"><span>2348.50</span><span>0.90</span></div>
+                    <div class="depth-row bid"><span>2347.10</span><span>1.45</span></div>
+                </div>
+            </div>
+
+            <!-- Price Alert Creation Section -->
+            <div class="sidebar-section">
+                <h3>මිල ඇඟවීම් (Price Alerts)</h3>
+                <div class="config-form">
+                    <label>ඉලක්කගත මිල (Target Price)</label>
+                    <input type="number" id="alertPriceInput" placeholder="ဥပද: 2350.00" step="0.1">
+                    <label>තත්ත්වය (Condition)</label>
+                    <select id="alertConditionInput" style="width: 100%; padding: 8px; background: #1e222d; color: #d1d4dc; border: 1px solid #2a2e39; border-radius: 4px; margin-bottom: 10px;">
+                        <option value="ABOVE">මිල ඉහළ නංින විට (Above)</option>
+                        <option value="BELOW">මිල පහළ බසින විට (Below)</option>
+                    </select>
+                    <button class="save-btn" id="setAlertBtn">Alert එකක් සකසන්න</button>
+                </div>
+                <!-- Active Alerts Container -->
+                <div id="activeAlertsContainer" style="margin-top: 10px; max-height: 150px; overflow-y: auto;"></div>
+            </div>
+
+            <div class="sidebar-section">
+                <h3>වේදිකා වින්‍යාසය (Settings)</h3>
+                <div class="config-form">
+                    <label>Binance API Status</label>
+                    <input type="text" id="mt5UrlInput" value="Connected (Active)" readonly>
+                    <label>ගිණුම් හැඳුනුම්පත (Account ID)</label>
+                    <input type="text" id="mt5AccInput" placeholder="Nexus User ID" value="Rohan_Pro">
+                    <button class="save-btn" id="saveMt5Config">සැකසුම් සුරකින්න</button>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Modular Scripts Loading -->
+    <script src="contextMenu.js"></script>
+    <script src="alertSystem.js"></script>
+    <script src="script.js"></script>
+    <script src="absorptionModule.js"></script>
+    <script src="volumeProfileModule.js"></script>
+    <script src="whaleBubbleModule.js"></script>
+    <script src="nexus-drawing-tools.js"></script>
+    <script src="nexus-footprint.js"></script>
+</body>
+</html>

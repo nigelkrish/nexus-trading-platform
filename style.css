@@ -1,0 +1,311 @@
+:root {
+    --bg-primary: #131722;
+    --bg-secondary: #1e222d;
+    --bg-tertiary: #2a2e39;
+    --text-primary: #d1d4dc;
+    --text-secondary: #787b86;
+    --accent-color: #2962ff;
+    --green-color: #089981;
+    --red-color: #f23645;
+    --border-color: #363c4e;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Trebuchet MS", Roboto, Ubuntu, sans-serif;
+}
+
+body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Top Navigation */
+.top-nav {
+    height: 55px;
+    background-color: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+}
+
+.nav-left, .nav-center, .nav-right {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.logo {
+    font-weight: bold;
+    font-size: 16px;
+    color: var(--accent-color);
+    letter-spacing: 1px;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+.status-dot.online { background-color: var(--green-color); box-shadow: 0 0 8px var(--green-color); }
+.status-text { font-size: 12px; color: var(--text-secondary); }
+
+/* Selectors & Buttons */
+select, input {
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    padding: 6px 12px;
+    border-radius: 4px;
+    outline: none;
+    font-size: 13px;
+}
+
+select:hover, input:hover { border-color: var(--text-secondary); }
+
+.timeframe-selector {
+    display: flex;
+    background: var(--bg-primary);
+    padding: 2px;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+}
+
+.tf-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    padding: 4px 10px;
+    font-size: 12px;
+    cursor: pointer;
+    border-radius: 3px;
+}
+
+.tf-btn.active, .tf-btn:hover {
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+.live-price-badge {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+#currentPriceDisplay {
+    font-size: 15px;
+    font-weight: bold;
+}
+
+#priceChangeDisplay {
+    font-size: 11px;
+}
+#priceChangeDisplay.positive { color: var(--green-color); }
+#priceChangeDisplay.negative { color: var(--red-color); }
+
+.nav-tabs {
+    display: flex;
+    gap: 5px;
+}
+
+.tab-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    padding: 6px 12px;
+    font-size: 13px;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.tab-btn.active {
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+/* Main Container Layout */
+.main-container {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+.workspace {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    gap: 10px;
+}
+
+.chart-panel {
+    flex: 1;
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.chart-header {
+    padding: 10px 15px;
+    font-size: 14px;
+    font-weight: bold;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    gap: 10px;
+}
+
+#chartContainer {
+    flex: 1;
+    width: 100%;
+    min-height: 400px;
+}
+
+/* Bottom Widgets */
+.bottom-widgets {
+    height: 120px;
+    display: flex;
+    gap: 10px;
+}
+
+.widget-box {
+    flex: 1;
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.widget-box h4 {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+}
+
+.power-bar-container {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.power-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+}
+
+.progress-bar {
+    height: 6px;
+    background-color: var(--bg-tertiary);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.fill-green { background-color: var(--green-color); height: 100%; }
+.fill-red { background-color: var(--red-color); height: 100%; }
+
+.action-buttons {
+    display: flex;
+    gap: 10px;
+    height: 100%;
+}
+
+.trade-btn {
+    flex: 1;
+    border: none;
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: pointer;
+    color: white;
+    font-size: 13px;
+}
+
+.buy-btn { background-color: var(--green-color); }
+.buy-btn:hover { opacity: 0.9; }
+
+.sell-btn { background-color: var(--red-color); }
+.sell-btn:hover { opacity: 0.9; }
+
+/* Right Sidebar */
+.sidebar {
+    width: 280px;
+    background-color: var(--bg-secondary);
+    border-left: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    gap: 15px;
+}
+
+.sidebar-section h3 {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 10px;
+}
+
+.depth-table {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    font-family: monospace;
+    font-size: 12px;
+}
+
+.depth-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 2px 6px;
+    border-radius: 2px;
+}
+
+.depth-row.ask { background-color: rgba(242, 54, 69, 0.1); color: var(--red-color); }
+.depth-row.bid { background-color: rgba(8, 153, 129, 0.1); color: var(--green-color); }
+.depth-spread { text-align: center; font-size: 11px; color: var(--text-secondary); padding: 4px 0; }
+
+.config-form {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.config-form label {
+    font-size: 11px;
+    color: var(--text-secondary);
+}
+
+.save-btn {
+    margin-top: 5px;
+    background-color: var(--accent-color);
+    color: white;
+    border: none;
+    padding: 6px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.chart-panel {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    height: 100%;
+}
+
+#chartContainer {
+    width: 100%;
+    height: 500px; /* අවශ්‍ය උස ලබා දෙන්න (උදා: 500px හෝ calc(100vh - 150px)) */
+    position: relative;
+}
