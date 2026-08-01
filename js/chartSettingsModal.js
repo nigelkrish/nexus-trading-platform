@@ -6,13 +6,18 @@ class ChartSettingsModal {
         
         // TradingView වගේ පාවිච්චි කරන Default Colors
         this.defaultSettings = {
-            upBody: '#26a69a',      // TradingView Green
-            downBody: '#ef5350',    // TradingView Red
+            upBody: '#26a69a',      
+            downBody: '#ef5350',    
             upBorder: '#26a69a',
             downBorder: '#ef5350',
             upWick: '#26a69a',
             downWick: '#ef5350',
-            bgColor: '#131722'
+            bgColor: '#131722',
+            symbolColor: '#26a69a',
+            prevCloseColor: '#787b86',
+            highLowColor: '#26a69a',
+            bidColor: '#2962ff',
+            askColor: '#ef5350'
         };
 
         this.init();
@@ -26,15 +31,13 @@ class ChartSettingsModal {
         }
 
         this.attachEventListeners();
-        this.initColorPickers(); // මෝඩල් එක లోඩ් වෙද්දී කලර්ස් ඔටෝ සෙට් කිරීම
+        this.initColorPickers(); 
     }
 
-    // කලර් පික්ස් වලට සහ ස්වොච් (Swatches) වලට ඩිෆෝල්ට්/වත්මන් පාට ඔටෝ දාලා දෙන්න
     initColorPickers() {
         const modal = this.modalElement;
         if (!modal) return;
 
-        // උදාහරණයක් ලෙස අදාළ ඉන්පුට් සහ Swatch මැප් කිරීම
         const colorMappings = [
             { id: 'tvUpBodyColor', defaultVal: this.defaultSettings.upBody },
             { id: 'tvDownBodyColor', defaultVal: this.defaultSettings.downBody },
@@ -42,16 +45,19 @@ class ChartSettingsModal {
             { id: 'tvDownBorderColor', defaultVal: this.defaultSettings.downBorder },
             { id: 'tvUpWickColor', defaultVal: this.defaultSettings.upWick },
             { id: 'tvDownWickColor', defaultVal: this.defaultSettings.downWick },
-            { id: 'tvBgColor', defaultVal: this.defaultSettings.bgColor }
+            { id: 'tvBgColor', defaultVal: this.defaultSettings.bgColor },
+            { id: 'tvSymbolColor', defaultVal: this.defaultSettings.symbolColor },
+            { id: 'tvPrevCloseColor', defaultVal: this.defaultSettings.prevCloseColor },
+            { id: 'tvHighLowColor', defaultVal: this.defaultSettings.highLowColor },
+            { id: 'tvBidColor', defaultVal: this.defaultSettings.bidColor },
+            { id: 'tvAskColor', defaultVal: this.defaultSettings.askColor }
         ];
 
         colorMappings.forEach(item => {
             const inputEl = document.getElementById(item.id) || modal.querySelector(`#${item.id}`);
             if (inputEl) {
-                // දැනට චාට් එකේ සෙටින්ග්ස් තියෙනවා නම් ඒවා ගන්න, නැත්නම් ඩිෆෝල්ට් එක දෙන්න
                 inputEl.value = item.defaultVal;
                 
-                // Rounded box (swatch) එකේ කලර් එක අප්ඩේට් කරන්න
                 const wrapper = inputEl.closest('.tv-color-box-wrapper') || inputEl.parentElement;
                 if (wrapper) {
                     const swatch = wrapper.querySelector('.tv-custom-color-swatch');
@@ -95,7 +101,7 @@ class ChartSettingsModal {
             });
         });
 
-        // 3. Live UI update for Rounded Color Boxes when user changes a color in panel
+        // 3. Live UI update for Rounded Color Boxes
         const colorInputs = modal.querySelectorAll('input[type="color"], .tv-native-color-input');
         colorInputs.forEach(input => {
             input.addEventListener('input', (e) => {
@@ -131,14 +137,12 @@ class ChartSettingsModal {
                 e.preventDefault();
                 e.stopPropagation();
                 if (isOkBtn) {
-                    // OK කලාම පමණක් චාට් එකට සෙටින්ග්ස් ඇප්ලයි වේ
                     this.applySettingsToChart();
                 }
                 closeModal();
             }
         });
 
-        // Close when clicking outside modal container
         modal.addEventListener('click', (e) => {
             if (e.target === modal) {
                 closeModal();
@@ -162,6 +166,37 @@ class ChartSettingsModal {
         const horzGridToggle = document.getElementById('tvHorzGridToggle');
         const bgColorInput = document.getElementById('tvBgColor') || document.querySelector('#panel-canvas input[type="color"]');
 
+        // Scales & Lines Inputs reading
+        const currencyUnit = document.getElementById('tvCurrencyUnit')?.value;
+        const scaleModes = document.getElementById('tvScaleModes')?.value;
+        const lockPriceRatio = document.getElementById('tvLockPriceRatio')?.checked;
+        const scalesPlacement = document.getElementById('tvScalesPlacement')?.value;
+
+        const noOverlappingLabels = document.getElementById('tvNoOverlappingLabels')?.checked;
+        const plusButton = document.getElementById('tvPlusButton')?.checked;
+        const countdownBarClose = document.getElementById('tvCountdownBarClose')?.checked;
+        
+        const symbolLabelMode = document.getElementById('tvSymbolLabelMode')?.value;
+        const symbolPriceSource = document.getElementById('tvSymbolPriceSource')?.value;
+        const symbolColor = document.getElementById('tvSymbolColor')?.value;
+
+        const prevCloseMode = document.getElementById('tvPrevCloseMode')?.value;
+        const prevCloseColor = document.getElementById('tvPrevCloseColor')?.value;
+
+        const indicatorsFinMode = document.getElementById('tvIndicatorsFinMode')?.value;
+        const highLowMode = document.getElementById('tvHighLowMode')?.value;
+        const highLowColor = document.getElementById('tvHighLowColor')?.value;
+
+        const bidAskMode = document.getElementById('tvBidAskMode')?.value;
+        const bidColor = document.getElementById('tvBidColor')?.value;
+        const askColor = document.getElementById('tvAskColor')?.value;
+
+        // Time Scale Inputs reading
+        const dayOfWeekLabels = document.getElementById('tvDayOfWeekLabels')?.checked;
+        const dateFormat = document.getElementById('tvDateFormat')?.value;
+        const timeHoursFormat = document.getElementById('tvTimeHoursFormat')?.value;
+        const saveLeftEdge = document.getElementById('tvSaveLeftEdge')?.checked;
+
         // 2. Apply options to Lightweight Charts series
         const seriesOptions = {};
         
@@ -182,11 +217,25 @@ class ChartSettingsModal {
 
         window.candlestickSeries.applyOptions(seriesOptions);
 
-        // 3. Apply chart options (Grid & Background)
+        // 3. Apply chart options (Grid, Background, Scales & TimeScale)
         const chartOptions = {
             grid: {
                 vertLines: { visible: vertGridToggle ? vertGridToggle.checked : true },
                 horzLines: { visible: horzGridToggle ? horzGridToggle.checked : true }
+            },
+            rightPriceScale: {
+                visible: scalesPlacement !== 'left',
+                autoScale: !lockPriceRatio,
+            },
+            leftPriceScale: {
+                visible: scalesPlacement === 'left',
+            },
+            timeScale: {
+                rightOffset: 12,
+                barSpacing: 6,
+                fixLeftEdge: saveLeftEdge,
+                timeVisible: true,
+                secondsVisible: false,
             }
         };
 
@@ -197,12 +246,22 @@ class ChartSettingsModal {
         }
 
         window.chart.applyOptions(chartOptions);
+
+        // Custom config state storage (օයාට අවශ්‍ය නම් වෙනත් ලොජික් වලට පාවිච්චි කරන්න පුළුවන්)
+        window.nexusChartConfig = {
+            currencyUnit, scaleModes, lockPriceRatio, scalesPlacement,
+            noOverlappingLabels, plusButton, countdownBarClose,
+            symbolLabelMode, symbolPriceSource, symbolColor,
+            prevCloseMode, prevCloseColor, indicatorsFinMode,
+            highLowMode, highLowColor, bidAskMode, bidColor, askColor,
+            dayOfWeekLabels, dateFormat, timeHoursFormat, saveLeftEdge
+        };
     }
 
     show() {
         if (this.modalElement) {
             this.modalElement.style.setProperty('display', 'flex', 'important');
-            this.initColorPickers(); // මෝඩල් එක ඕන් වෙනකොට අලුත්ම තත්ත්වය ලෝඩ් කරගන්න
+            this.initColorPickers(); 
         }
     }
 }
