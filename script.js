@@ -1,4 +1,4 @@
-// --- Nexus Trading Platform - Script.js (Fully Fixed & Optimized with Chart Settings Modal Logic) ---
+// --- Nexus Trading Platform - Script.js (Master Settings Event Integration Fixed) ---
 
 let chart;
 let candlestickSeries;
@@ -67,7 +67,6 @@ function initChart() {
         wickDownColor: '#ef5350',
     });
 
-    // Make chart and series globally accessible for modules
     window.chart = chart;
     window.candlestickSeries = candlestickSeries;
 
@@ -103,15 +102,12 @@ function initChart() {
 
     // TradingView-style Right Click Menu Integration
     container.addEventListener('contextmenu', (e) => {
-        e.preventDefault(); // Stop default browser right-click menu
+        e.preventDefault();
         
         if (!chart || !candlestickSeries) return;
 
-        // Get mouse coordinates relative to chart container
         const rect = container.getBoundingClientRect();
         const y = e.clientY - rect.top;
-
-        // Convert pixel y-coordinate to price value using Lightweight Charts API
         const coordinatePrice = candlestickSeries.coordinateToPrice(y);
         
         if (coordinatePrice !== null && window.chartContextMenu) {
@@ -126,7 +122,7 @@ function setupEventListeners() {
     if (symbolSelect) {
         symbolSelect.addEventListener('change', (e) => {
             currentSymbol = e.target.value;
-            window.currentSymbol = currentSymbol; // Sync with global window object
+            window.currentSymbol = currentSymbol;
             document.getElementById('activeSymbolLabel').innerText = currentSymbol;
             exitReplayMode();
             resetAndReload();
@@ -153,18 +149,10 @@ function setupEventListeners() {
     const replayPlayBtn = document.getElementById('replayPlayBtn');
     const replayExitBtn = document.getElementById('replayExitBtn');
 
-    if (replayToggleBtn) {
-        replayToggleBtn.addEventListener('click', promptReplaySelection);
-    }
-    if (replayStepBtn) {
-        replayStepBtn.addEventListener('click', replayStepForward);
-    }
-    if (replayPlayBtn) {
-        replayPlayBtn.addEventListener('click', toggleReplayPlay);
-    }
-    if (replayExitBtn) {
-        replayExitBtn.addEventListener('click', exitReplayMode);
-    }
+    if (replayToggleBtn) replayToggleBtn.addEventListener('click', promptReplaySelection);
+    if (replayStepBtn) replayStepBtn.addEventListener('click', replayStepForward);
+    if (replayPlayBtn) replayPlayBtn.addEventListener('click', toggleReplayPlay);
+    if (replayExitBtn) replayExitBtn.addEventListener('click', exitReplayMode);
 
     // Sidebar Manual Alert Setup Button
     const setAlertBtn = document.getElementById('setAlertBtn');
@@ -180,36 +168,42 @@ function setupEventListeners() {
         });
     }
 
-    // --- Chart Settings Modal Interactions ---
-    const settingsBtn = document.getElementById('mainChartSettingsBtn');
-    const settingsModal = document.getElementById('chartSettingsModal');
-    const closeSettingsBtn = document.getElementById('closeChartSettings');
-    const saveSettingsBtn = document.getElementById('saveChartSettingsBtn');
+    // --- Master Settings Modal & Top Navigation "සැකසුම්" Tab Integration ---
+    const navTabs = document.querySelectorAll('.tab-btn');
+    const masterModal = document.getElementById('masterSettingsModal');
+    const closeMasterBtn = document.getElementById('closeMasterSettings');
+    const saveMasterBtn = document.getElementById('saveMasterSettingsBtn');
 
-    if (settingsBtn && settingsModal) {
-        settingsBtn.addEventListener('click', () => {
-            settingsModal.style.display = 'flex';
+    navTabs.forEach(tab => {
+        tab.addEventListener('click', (e) => {
+            const tabName = e.target.getAttribute('data-tab');
+            
+            navTabs.forEach(t => t.classList.remove('active'));
+            e.target.classList.add('active');
+
+            // "සැකසුම්" ටැබ් එක ක්ලික් කළ විට Modal එක පෙන්වීම
+            if (tabName === 'settings' && masterModal) {
+                masterModal.style.display = 'flex';
+            }
+        });
+    });
+
+    if (closeMasterBtn && masterModal) {
+        closeMasterBtn.addEventListener('click', () => {
+            masterModal.style.display = 'none';
         });
     }
 
-    if (closeSettingsBtn && settingsModal) {
-        closeSettingsBtn.addEventListener('click', () => {
-            settingsModal.style.display = 'none';
-        });
-    }
-
-    // Close modal when clicking outside of content
     window.addEventListener('click', (e) => {
-        if (e.target === settingsModal) {
-            settingsModal.style.display = 'none';
+        if (e.target === masterModal) {
+            masterModal.style.display = 'none';
         }
     });
 
-    if (saveSettingsBtn && chart) {
-        saveSettingsBtn.addEventListener('click', () => {
-            const gridToggle = document.getElementById('settingGridToggle').checked;
-            
-            // Apply Grid lines visibility settings to chart
+    if (saveMasterBtn && chart) {
+        saveMasterBtn.addEventListener('click', () => {
+            // Chart Grid Settings
+            const gridToggle = document.getElementById('masterGridToggle').checked;
             chart.applyOptions({
                 grid: {
                     vertLines: { visible: gridToggle, color: '#1f293d' },
@@ -217,7 +211,19 @@ function setupEventListeners() {
                 }
             });
 
-            settingsModal.style.display = 'none';
+            // Modules Visibility Settings Control
+            const whaleToggle = document.getElementById('masterWhaleToggle').checked;
+            const volumeProfileToggle = document.getElementById('masterVolumeProfileToggle').checked;
+            const absorptionToggle = document.getElementById('masterAbsorptionToggle').checked;
+            const footprintToggle = document.getElementById('masterFootprintToggle').checked;
+
+            if (window.whaleBubbleModule) window.whaleBubbleModule.setVisibility(whaleToggle);
+            if (window.volumeProfileModule) window.volumeProfileModule.setVisibility(volumeProfileToggle);
+            if (window.absorptionModule) window.absorptionModule.setVisibility(absorptionToggle);
+            if (window.nexusFootprint) window.nexusFootprint.setVisibility(footprintToggle);
+
+            masterModal.style.display = 'none';
+            alert('සියලු සැකසුම් සාර්ථකව සුරකින ලදී!');
         });
     }
 }
@@ -225,8 +231,6 @@ function setupEventListeners() {
 function resetAndReload() {
     oldestTimestamp = null;
     hasMoreData = true;
-    
-    // Increment ID to invalidate pending/active WebSocket connections instantly
     wsConnectionId++;
     
     if (ws) {
@@ -248,7 +252,7 @@ function resetAndReload() {
 // 3. Load Initial Historical Data
 async function loadChartData(symbol, timeframe) {
     try {
-        window.currentSymbol = symbol; // Keep global in sync
+        window.currentSymbol = symbol;
         const url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${timeframe}&limit=500`;
         const response = await fetch(url);
         const data = await response.json();
@@ -322,7 +326,7 @@ async function loadMoreHistoricalData() {
     }
 }
 
-// 5. WebSocket Realtime Ticks (Safe Instance & Lifecycle Tracking)
+// 5. WebSocket Realtime Ticks
 function connectWebSocket(symbol, timeframe) {
     if (wsDebounceTimer) {
         clearTimeout(wsDebounceTimer);
