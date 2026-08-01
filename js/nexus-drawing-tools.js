@@ -1,4 +1,4 @@
-// --- Nexus Trading Platform - Advanced Drawing Manager (TradingView Style Double Click Edit) ---
+// --- Nexus Trading Platform - Advanced Drawing Manager (TradingView Style Ultimate Update) ---
 
 class TrendToolsModule {
     constructor() {
@@ -91,11 +91,11 @@ class TrendToolsModule {
         }
         else if (item.subType === 'parallelchannel') {
             if (item.yOffset === undefined) item.yOffset = 60;
-            if (item.x3 === undefined) item.x3 = item.x2 + (item.x1 ? 0 : 100);
+            if (item.channelShiftX === undefined) item.channelShiftX = 0;
 
-            const bX1 = item.x1 + (item.channelShiftX || 0);
+            const bX1 = item.x1 + item.channelShiftX;
             const bY1 = item.y1 + item.yOffset;
-            const bX2 = item.x2 + (item.channelShiftX || 0);
+            const bX2 = item.x2 + item.channelShiftX;
             const bY2 = item.y2 + item.yOffset;
             
             // Top Line
@@ -110,7 +110,7 @@ class TrendToolsModule {
             ctx.lineTo(bX2, bY2);
             ctx.stroke();
 
-            // Middle dashed line
+            // Middle Dashed Line (TradingView style precise center span)
             ctx.save();
             ctx.strokeStyle = item.color || '#26a69a';
             ctx.setLineDash([4, 4]);
@@ -129,8 +129,34 @@ class TrendToolsModule {
             ctx.lineTo(bX1, bY1);
             ctx.closePath();
             ctx.fill();
+
+            // Center Text for Parallel Channel
+            const midX = (item.x1 + item.x2 + bX1 + bX2) / 4;
+            const midY = (item.y1 + item.y2 + bY1 + bY2) / 4;
+            let angle = Math.atan2(item.y2 - item.y1, item.x2 - item.x1);
+            if (angle > Math.PI / 2) angle -= Math.PI;
+            if (angle < -Math.PI / 2) angle += Math.PI;
+
+            ctx.save();
+            ctx.translate(midX, midY);
+            ctx.rotate(angle);
+            if (item.text) {
+                ctx.font = '12px Inter, sans-serif';
+                ctx.fillStyle = item.color || '#26a69a';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(item.text, 0, 0);
+            } else if (isSelected) {
+                ctx.font = '11px Inter, sans-serif';
+                ctx.fillStyle = '#848e9c';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('+ Add text', 0, 0);
+            }
+            ctx.restore();
         }
 
+        // Center Text Alignment for regular line tools (aligned perfectly with line direction)
         if (item.subType !== 'parallelchannel') {
             const midX = (item.x1 + item.x2) / 2;
             const midY = (item.y1 + item.y2) / 2;
@@ -159,6 +185,7 @@ class TrendToolsModule {
             ctx.restore();
         }
 
+        // Selection Handles Render
         if (isSelected) {
             const drawHandle = (hx, hy, isSquare = false) => {
                 ctx.save();
@@ -557,6 +584,7 @@ class NexusDrawingManager {
                     this.selectedDrawing.x2 = mouseX;
                     this.selectedDrawing.y2 = mouseY;
                 } else if (this.draggingHandle === 'pc_p3' || this.draggingHandle === 'pc_p4') {
+                    // Smooth Edge Drag for Parallel Channel Height
                     this.selectedDrawing.yOffset = mouseY - this.selectedDrawing.y1;
                     this.selectedDrawing.channelShiftX = mouseX - this.selectedDrawing.x1;
                 } else if (this.draggingHandle === 'move') {
@@ -636,8 +664,6 @@ class NexusDrawingManager {
             box-shadow: 0 6px 20px rgba(0,0,0,0.5); user-select: none; cursor: grab;
         `;
 
-        let textBtnHTML = drawing.subType === 'parallelchannel' ? '' : `<button id="ftTextBtn" style="background:#2a2e39; color:#d1d4dc; border:1px solid #363c4e; border-radius:4px; padding:2px 6px; font-size:12px; cursor:pointer;" title="Add/Edit Text">T Text</button>`;
-
         bar.innerHTML = `
             <span style="color: #848e9c; cursor: grab; font-size: 14px;" title="Drag Toolbar">⠿</span>
             <input type="color" id="ftColor" value="${drawing.color || '#26a69a'}" style="border:none; width:22px; height:22px; background:none; cursor:pointer;" title="Change Color">
@@ -647,7 +673,7 @@ class NexusDrawingManager {
                 <option value="3" ${drawing.width==3?'selected':''}>3px</option>
                 <option value="4" ${drawing.width==4?'selected':''}>4px</option>
             </select>
-            ${textBtnHTML}
+            <button id="ftTextBtn" style="background:#2a2e39; color:#d1d4dc; border:1px solid #363c4e; border-radius:4px; padding:2px 6px; font-size:12px; cursor:pointer;" title="Add/Edit Text">T Text</button>
             <button id="ftSettingsBtn" style="background:#2a2e39; color:#d1d4dc; border:1px solid #363c4e; border-radius:4px; padding:2px 6px; font-size:12px; cursor:pointer;" title="Settings Panel">⚙️</button>
             <div style="width:1px; height:16px; background:#363c4e;"></div>
             <button id="ftDel" style="background:transparent; border:none; color:#ef5350; cursor:pointer; font-size:14px;" title="Delete">🗑️</button>
@@ -687,15 +713,13 @@ class NexusDrawingManager {
             this.redrawCanvas();
         };
 
-        if (drawing.subType !== 'parallelchannel') {
-            document.getElementById('ftTextBtn').onclick = () => {
-                let txt = prompt('Enter text for this tool:', drawing.text || '');
-                if (txt !== null) {
-                    drawing.text = txt;
-                    this.redrawCanvas();
-                }
-            };
-        }
+        document.getElementById('ftTextBtn').onclick = () => {
+            let txt = prompt('Enter text for this tool:', drawing.text || '');
+            if (txt !== null) {
+                drawing.text = txt;
+                this.redrawCanvas();
+            }
+        };
 
         document.getElementById('ftSettingsBtn').onclick = (e) => {
             const rect = e.target.getBoundingClientRect();
@@ -722,13 +746,6 @@ class NexusDrawingManager {
             box-shadow: 0 8px 24px rgba(0,0,0,0.6); padding: 14px; font-family: Inter, sans-serif; color: #d1d4dc; user-select: none;
         `;
 
-        let textInputHTML = drawing.subType === 'parallelchannel' ? '' : `
-            <div style="display: flex; flex-direction: column; gap: 4px;">
-                <span>Custom Text:</span>
-                <input type="text" id="modalText" value="${drawing.text || ''}" placeholder="Enter text..." style="background:#2a2e39; color:#fff; border:1px solid #363c4e; border-radius:4px; padding:5px 8px; font-size:12px; outline:none;">
-            </div>
-        `;
-
         modal.innerHTML = `
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #363c4e; padding-bottom: 8px;">
                 <span style="font-weight: 600; font-size: 13px;">Drawing Settings</span>
@@ -748,7 +765,10 @@ class NexusDrawingManager {
                         <option value="4" ${drawing.width==4?'selected':''}>4px</option>
                     </select>
                 </div>
-                ${textInputHTML}
+                <div style="display: flex; flex-direction: column; gap: 4px;">
+                    <span>Custom Text:</span>
+                    <input type="text" id="modalText" value="${drawing.text || ''}" placeholder="Enter text..." style="background:#2a2e39; color:#fff; border:1px solid #363c4e; border-radius:4px; padding:5px 8px; font-size:12px; outline:none;">
+                </div>
             </div>
         `;
 
@@ -770,12 +790,10 @@ class NexusDrawingManager {
             this.redrawCanvas();
         };
 
-        if (drawing.subType !== 'parallelchannel') {
-            document.getElementById('modalText').oninput = (e) => {
-                drawing.text = e.target.value;
-                this.redrawCanvas();
-            };
-        }
+        document.getElementById('modalText').oninput = (e) => {
+            drawing.text = e.target.value;
+            this.redrawCanvas();
+        };
 
         setTimeout(() => {
             window.addEventListener('click', function closeMod(evt) {
