@@ -43,45 +43,35 @@ class ChartSettingsModal {
             });
         });
 
-        // 3. Close / Cancel / OK buttons (Catching all possible selectors for the close button)
-        const closeBtn = modal.querySelector('#closeChartSettings') || 
-                         modal.querySelector('.close-btn') || 
-                         modal.querySelector('.tv-close-btn') || 
-                         modal.querySelector('.tv-modal-header button');
-                         
-        const cancelBtn = modal.querySelector('#tvCancelBtn');
-        const okBtn = modal.querySelector('#tvOkBtn');
-
+        // 3. Universal Close / Cancel / OK listener using Event Delegation & Class/ID matching
         const closeModal = () => { 
             modal.style.display = 'none'; 
         };
 
-        if (closeBtn) {
-            closeBtn.addEventListener('click', (e) => {
+        modal.addEventListener('click', (e) => {
+            // Target any close button (using &times;, classes, or IDs)
+            if (
+                e.target.id === 'closeChartSettings' || 
+                e.target.classList.contains('close-btn') || 
+                e.target.classList.contains('tv-close-btn') ||
+                e.target.id === 'tvCancelBtn' ||
+                e.target.id === 'tvOkBtn' ||
+                e.target.textContent.trim() === '×'
+            ) {
                 e.preventDefault();
+                if (e.target.id === 'tvOkBtn') {
+                    this.applySettingsToChart();
+                }
                 closeModal();
-            });
-        }
-
-        if (cancelBtn) {
-            cancelBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                closeModal();
-            });
-        }
-        
-        // Close when clicking outside modal container
-        window.addEventListener('click', (e) => { 
-            if (e.target === modal) closeModal(); 
+            }
         });
 
-        // 4. Apply Settings on OK click
-        if (okBtn) {
-            okBtn.addEventListener('click', () => {
-                this.applySettingsToChart();
-                closeModal();
-            });
-        }
+        // Close when clicking outside modal container
+        window.addEventListener('click', (e) => { 
+            if (e.target === modal) {
+                closeModal(); 
+            }
+        });
     }
 
     applySettingsToChart() {
