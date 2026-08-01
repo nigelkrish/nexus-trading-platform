@@ -183,12 +183,16 @@ function resetAndReload() {
     
     // පරණ WebSocket කනෙක්ෂන් එක ආරක්ෂාකාරීව Close කිරීම
     if (ws) {
-        ws.onopen = null;
-        ws.onmessage = null;
-        ws.onerror = null;
-        ws.onclose = null;
-        if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
-            ws.close();
+        try {
+            ws.onopen = null;
+            ws.onmessage = null;
+            ws.onerror = null;
+            ws.onclose = null;
+            if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
+                ws.close();
+            }
+        } catch (e) {
+            console.error('Error closing websocket on reset:', e);
         }
         ws = null;
     }
@@ -273,50 +277,65 @@ async function loadMoreHistoricalData() {
     }
 }
 
-// 5. WebSocket Realtime Ticks (Fixed & Optimized - Port 9443 Removed)
+// 5. WebSocket Realtime Ticks (Fully Safe & Debounced)
 function connectWebSocket(symbol, timeframe) {
+    // 1. පවතින WebSocket එකක් ඇත්නම් එය සම්පූර්ණයෙන්ම ක්ලෝස් කර క్లియర్ කිරීම
     if (ws) {
-        ws.onopen = null;
-        ws.onmessage = null;
-        ws.onerror = null;
-        ws.onclose = null;
-        if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
-            ws.close();
+        try {
+            ws.onopen = null;
+            ws.onmessage = null;
+            ws.onerror = null;
+            ws.onclose = null;
+            if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
+                ws.close();
+            }
+        } catch (e) {
+            console.error('Error closing previous websocket:', e);
         }
         ws = null;
     }
     
     if (isReplayMode) return;
 
-    const wsUrl = `wss://stream.binance.com/ws/${symbol.toLowerCase()}@kline_${timeframe}`;
-    ws = new WebSocket(wsUrl);
-
-    ws.onmessage = (event) => {
+    // 2. ක්ෂණිකව බ්ලොක් වීම වැළැක්වීමට කෙටි ප්‍රමාදයක් (Micro-delay) සහිතව කනෙක්ට් කිරීම
+    setTimeout(() => {
         if (isReplayMode) return;
-        const message = JSON.parse(event.data);
-        if (message.k) {
-            const kline = message.k;
-            const candleData = {
-                time: kline.t / 1000,
-                open: parseFloat(kline.o),
-                high: parseFloat(kline.h),
-                low: parseFloat(kline.l),
-                close: parseFloat(kline.c)
+        
+        const wsUrl = `wss://stream.binance.com/ws/${symbol.toLowerCase()}@kline_${timeframe}`;
+        
+        try {
+            ws = new WebSocket(wsUrl);
+
+            ws.onmessage = (event) => {
+                if (isReplayMode) return;
+                const message = JSON.parse(event.data);
+                if (message.k) {
+                    const kline = message.k;
+                    const candleData = {
+                        time: kline.t / 1000,
+                        open: parseFloat(kline.o),
+                        high: parseFloat(kline.h),
+                        low: parseFloat(kline.l),
+                        close: parseFloat(kline.c)
+                    };
+
+                    candlestickSeries.update(candleData);
+                    updatePriceDisplay(candleData.close, candleData.open);
+
+                    // Pass live price to Modular Alert System
+                    if (window.nexusAlerts) {
+                        window.nexusAlerts.checkAlerts(candleData.close, currentSymbol);
+                    }
+                }
             };
 
-            candlestickSeries.update(candleData);
-            updatePriceDisplay(candleData.close, candleData.open);
-
-            // Pass live price to Modular Alert System
-            if (window.nexusAlerts) {
-                window.nexusAlerts.checkAlerts(candleData.close, currentSymbol);
-            }
+            ws.onerror = (error) => {
+                // Silently handle to prevent console spam
+            };
+        } catch (err) {
+            console.error('Failed to create WebSocket:', err);
         }
-    };
-
-    ws.onerror = (error) => {
-        console.error('WebSocket Error:', error);
-    };
+    }, 150);
 }
 
 // --- Bar Replay Interactive Functions ---
@@ -332,13 +351,15 @@ function promptReplaySelection() {
 function activateReplayFromIndex(index) {
     isReplayMode = true;
     if (ws) {
-        ws.onopen = null;
-        ws.onmessage = null;
-        ws.onerror = null;
-        ws.onclose = null;
-        if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
-            ws.close();
-        }
+        try {
+            ws.onopen = null;
+            ws.onmessage = null;
+            ws.onerror = null;
+            ws.onclose = null;
+            if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
+                ws.close();
+            }
+        } catch (e) {}
         ws = null;
     }
 
