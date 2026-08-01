@@ -1,4 +1,4 @@
-// --- Nexus Trading Platform - Main Drawing Manager & Toolbar (All-in-One Live Ready) ---
+// --- Nexus Trading Platform - Main Drawing Manager & Toolbar (With Right-Click Settings Menu) ---
 
 class TrendToolsModule {
     constructor() {
@@ -255,12 +255,28 @@ class NexusDrawingManager {
         let startX = 0, startY = 0;
 
         canvas.onmousedown = (e) => {
-            if (!this.isVisible || this.isLocked || this.activeTool === 'cursor') return;
-            isDrawing = true;
+            if (!this.isVisible || this.isLocked) return;
+            
             const rect = canvas.getBoundingClientRect();
-            startX = e.clientX - rect.left;
-            startY = e.clientY - rect.top;
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            // Right-Click කළ විට (Button 2) ඩ්‍රොයින් එකක් අසල මෙනුව පෙන්වීම
+            if (e.button === 2) {
+                e.preventDefault();
+                this.checkAndShowContextMenu(mouseX, mouseY, e.clientX, e.clientY);
+                return;
+            }
+
+            if (this.activeTool === 'cursor') return;
+
+            isDrawing = true;
+            startX = mouseX;
+            startY = mouseY;
         };
+
+        // Right-Click එකේදී Default Browser Context Menu එක ඒම වැළැක්වීම
+        canvas.oncontextmenu = (e) => e.preventDefault();
 
         canvas.onmouseup = (e) => {
             if (!isDrawing) return;
@@ -271,6 +287,7 @@ class NexusDrawingManager {
 
             if (this.activeTool === 'trendline') {
                 this.drawings.push({
+                    id: Date.now(),
                     type: 'trend',
                     subType: this.activeSubTool,
                     x1: startX, y1: startY,
@@ -290,12 +307,107 @@ class NexusDrawingManager {
         });
     }
 
+    // ඩ්‍රොයින් එකක් මත Right-Click කළ විට Settings මෙනුව පෙන්වීම
+    checkAndShowContextMenu(x, y, clientX, clientY) {
+        let clickedDrawing = null;
+
+        // ක්ලික් කළ තැනට ආසන්නව ඇති ඩ්‍රොයින් එකක් සෙවීම (Tolerance: 10px)
+        for (let item of this.drawings) {
+            let dist = this.pDistance(x, y, item.x1, item.y1, item.x2, item.y2);
+            if (dist < 10) {
+                clickedDrawing = item;
+                break;
+            }
+        }
+
+        let existingMenu = document.getElementById('nexusContextMenu');
+        if (existingMenu) existingMenu.remove();
+
+        if (!clickedDrawing) return;
+
+        const menu = document.createElement('div');
+        menu.id = 'nexusContextMenu';
+        menu.style.cssText = `
+            position: fixed; left: ${clientX}px; top: ${clientY}px; z-index: 10000;
+            background: #1e222d; border: 1px solid #363c4e; border-radius: 6px;
+            display: flex; flex-direction: column; gap: 4px; padding: 6px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.6); width: 170px; user-select: none;
+        `;
+
+        menu.innerHTML = `
+            <div style="font-size: 11px; color: #848e9c; padding: 4px 8px; border-bottom: 1px solid #363c4e; margin-bottom: 2px;">Drawing Settings</div>
+            <div id="set_color" style="padding: 6px 8px; font-size: 12px; color: #d1d4dc; cursor: pointer; border-radius: 4px; display:flex; justify-content:space-between; align-items:center;">
+                <span>🎨 Change Color</span>
+                <input type="color" id="drawingColorPicker" value="${clickedDrawing.color}" style="border:none; width:20px; height:20px; background:none; cursor:pointer;">
+            </div>
+            <div id="set_width" style="padding: 6px 8px; font-size: 12px; color: #d1d4dc; cursor: pointer; border-radius: 4px;">
+                📏 Thickness: <select id="drawingWidthSelect" style="background:#2a2e39; color:#fff; border:1px solid #363c4e; border-radius:3px;">
+                    <option value="1" ${clickedDrawing.width==1?'selected':''}>1px</option>
+                    <option value="2" ${clickedDrawing.width==2?'selected':''}>2px</option>
+                    <option value="3" ${clickedDrawing.width==3?'selected':''}>3px</option>
+                    <option value="4" ${clickedDrawing.width==4?'selected':''}>4px</option>
+                </select>
+            </div>
+            <div style="height: 1px; background: #363c4e; margin: 2px 0;"></div>
+            <div id="set_delete" style="padding: 6px 8px; font-size: 12px; color: #ef5350; cursor: pointer; border-radius: 4px;">🗑️ Delete Drawing</div>
+        `;
+
+        document.body.appendChild(menu);
+
+        // පාට වෙනස් කිරීම
+        document.getElementById('drawingColorPicker').oninput = (e) => {
+            clickedDrawing.color = e.target.value;
+            this.redrawCanvas();
+        };
+
+        // ඝනකම වෙනස් කිරීම
+        document.getElementById('drawingWidthSelect').onchange = (e) => {
+            clickedDrawing.width = parseInt(e.target.value);
+            this.redrawCanvas();
+        };
+
+        // ඩ්‍රොයින් එක ඉවත් කිරීම (Delete)
+        document.getElementById('set_delete').onclick = () => {
+            this.drawings = this.drawings.filter(d => d !== clickedDrawing);
+            this.redrawCanvas();
+            menu.remove();
+        };
+
+        // මෙනුවෙන් පිටත ක්ලික් කළහොත් එය වැසී යාම
+        document.addEventListener('click', function closeCtx(e) {
+            if (!menu.contains(e.target)) {
+                menu.remove();
+                document.removeEventListener('click', closeCtx);
+            }
+        });
+    }
+
+    // ලයින් එකක් අසලටම මවුසය ක්ලික් වී ඇත්දැයි ගණනය කරන ගණිතමය සූත්‍රය
+    pDistance(x, y, x1, y1, x2, y2) {
+        let A = x - x1;
+        let B = y - y1;
+        let C = x2 - x1;
+        let D = y2 - y1;
+        let dot = A * C + B * D;
+        let len_sq = C * C + D * D;
+        let param = -1;
+        if (len_sq !== 0) param = dot / len_sq;
+        let xx, yy;
+        if (param < 0) { xx = x1; yy = y1; }
+        else if (param > 1) { xx = x2; yy = y2; }
+        else { xx = x1 + param * C; yy = y1 + param * D; }
+        let dx = x - xx;
+        let dy = y - yy;
+        return Math.sqrt(dx * dx + dy * dy);
+    }
+
     redrawCanvas() {
         const canvas = document.getElementById('nexusDrawingCanvas');
         if (!canvas) return;
         const ctx = canvas.getContext('2d');
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
+        this.drawings.drawings = this.drawings || [];
         this.drawings.forEach(item => {
             if (item.type === 'trend') {
                 this.trendModule.draw(ctx, item);
@@ -304,7 +416,6 @@ class NexusDrawingManager {
     }
 }
 
-// ආරම්භ කිරීම (මෙයට කිසිදු type="module" හෝ ඉම්පෝර්ට් අවශ්‍ය නොවේ)
 window.addEventListener('DOMContentLoaded', () => {
     window.nexusDrawingManager = new NexusDrawingManager();
 });
