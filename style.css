@@ -26,220 +26,7 @@ body {
     overflow: hidden;
 }
 
-/* Top Right Control & Settings Icon */
-.top-right-controls {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.chart-settings-icon-btn {
-    background: transparent;
-    border: 1px solid #2a2e39;
-    color: #9598a1;
-    width: 32px;
-    height: 32px;
-    border-radius: 6px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.chart-settings-icon-btn:hover {
-    background: #1e222d;
-    color: #2962ff;
-    border-color: #2962ff;
-}
-
-/* Modal Popup Styles */
-.nexus-modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.7);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-}
-
-.nexus-modal-content {
-    background: #131722;
-    border: 1px solid #2a2e39;
-    border-width: 1px;
-    border-radius: 8px;
-    width: 400px;
-    max-width: 90%;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
-    color: #d1d4dc;
-}
-
-.nexus-modal-header {
-    padding: 16px 20px;
-    border-bottom: 1px solid #2a2e39;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.nexus-modal-header h3 {
-    margin: 0;
-    font-size: 16px;
-    font-weight: 600;
-}
-
-.close-modal-btn {
-    background: none;
-    border: none;
-    color: #9598a1;
-    font-size: 20px;
-    cursor: pointer;
-}
-
-.close-modal-btn:hover {
-    color: #fff;
-}
-
-.nexus-modal-body {
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-}
-
-.setting-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 14px;
-}
-
-.nexus-select {
-    background: #1e222d;
-    border: 1px solid #2a2e39;
-    color: #d1d4dc;
-    padding: 6px 10px;
-    border-radius: 4px;
-}
-
-.nexus-modal-footer {
-    padding: 12px 20px;
-    border-top: 1px solid #2a2e39;
-    display: flex;
-    justify-content: flex-end;
-}
-
-.nexus-btn-primary {
-    background: #2962ff;
-    color: #fff;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-weight: 600;
-}
-
-.nexus-btn-primary:hover {
-    background: #1e53db;
-}
-
-/* --- TradingView Style Settings Modal Popup Fix --- */
-#tradingViewSettingsModal, .tv-modal-overlay {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: 100vw !important;
-    height: 100vh !important;
-    background: rgba(0, 0, 0, 0.7) !important;
-    display: flex !important;
-    justify-content: center !important;
-    align-items: center !important;
-    z-index: 99999 !important;
-}
-
-.tv-modal-container {
-    background: #1e222d !important;
-    width: 720px !important;
-    height: 520px !important;
-    border-radius: 8px !important;
-    border: 1px solid #2a2e39 !important;
-    display: flex !important;
-    flex-direction: column !important;
-    color: #d1d4dc !important;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6) !important;
-    overflow: hidden !important;
-}
-
-.tv-modal-header {
-    display: flex !important;
-    justify-content: space-between !important;
-    align-items: center !important;
-    padding: 16px 20px !important;
-    border-bottom: 1px solid #2a2e39 !important;
-    background: #1e222d !important;
-}
-
-.tv-modal-body {
-    display: flex !important;
-    flex: 1 !important;
-    overflow: hidden !important;
-}
-
-.tv-sidebar-tabs {
-    width: 190px !important;
-    border-right: 1px solid #2a2e39 !important;
-    padding: 10px 0 !important;
-    background: #131722 !important;
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 4px !important;
-}
-
-.tv-tab-item {
-    width: 100% !important;
-    background: none !important;
-    border: none !important;
-    color: #9db2ce !important;
-    padding: 10px 16px !important;
-    text-align: left !important;
-    font-size: 13px !important;
-    cursor: pointer !important;
-    display: flex !important;
-    align-items: center !important;
-    gap: 10px !important;
-}
-
-.tv-tab-item:hover {
-    background: #1e222d !important;
-    color: #d1d4dc !important;
-}
-
-.tv-tab-item.active {
-    background: #2a2e39 !important;
-    color: #2962ff !important;
-    font-weight: 500 !important;
-}
-
-.tv-content-panels {
-    flex: 1 !important;
-    padding: 20px !important;
-    overflow-y: auto !important;
-    background: #1e222d !important;
-}
-
-.tv-panel-content {
-    display: none !important;
-}
-
-.tv-panel-content.active {
-    display: block !important;
-}
-
-/* Top Navigation */
+/* --- Top Navigation --- */
 .top-nav {
     height: 55px;
     background-color: var(--bg-secondary);
@@ -344,7 +131,34 @@ select:hover, input:hover { border-color: var(--text-secondary); }
     color: var(--text-primary);
 }
 
-/* Main Container Layout */
+/* Top Right Control & Settings Icon */
+.top-right-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.chart-settings-icon-btn {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.chart-settings-icon-btn:hover {
+    background: var(--bg-secondary);
+    color: var(--accent-color);
+    border-color: var(--accent-color);
+}
+
+/* --- Main Container Layout --- */
 .main-container {
     display: flex;
     flex: 1;
@@ -382,9 +196,10 @@ select:hover, input:hover { border-color: var(--text-secondary); }
     flex: 1;
     width: 100%;
     min-height: 400px;
+    position: relative;
 }
 
-/* Bottom Widgets */
+/* --- Bottom Widgets --- */
 .bottom-widgets {
     height: 120px;
     display: flex;
@@ -452,7 +267,7 @@ select:hover, input:hover { border-color: var(--text-secondary); }
 .sell-btn { background-color: var(--red-color); }
 .sell-btn:hover { opacity: 0.9; }
 
-/* Right Sidebar */
+/* --- Right Sidebar --- */
 .sidebar {
     width: 280px;
     background-color: var(--bg-secondary);
@@ -510,15 +325,228 @@ select:hover, input:hover { border-color: var(--text-secondary); }
     font-size: 12px;
 }
 
-.chart-panel {
-    display: flex;
-    flex-direction: column;
-    flex-grow: 1;
-    height: 100%;
+/* --- TradingView Style Settings Modal Popup --- */
+#tradingViewSettingsModal, .tv-modal-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background: rgba(0, 0, 0, 0.75) !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    z-index: 99999 !important;
 }
 
-#chartContainer {
-    width: 100%;
-    height: 500px; /* අවශ්‍ය උස ලබා දෙන්න (උදා: 500px හෝ calc(100vh - 150px)) */
-    position: relative;
+.tv-modal-container {
+    background: #1e222d !important;
+    width: 780px !important;
+    height: 560px !important;
+    border-radius: 6px !important;
+    border: 1px solid var(--border-color) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    color: var(--text-primary) !important;
+    box-shadow: 0 16px 32px rgba(0, 0, 0, 0.6) !important;
+    overflow: hidden !important;
+    position: relative !important;
+}
+
+.tv-modal-header {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 16px 20px !important;
+    border-bottom: 1px solid var(--border-color) !important;
+    background: #1e222d !important;
+    font-size: 16px !important;
+    font-weight: 600 !important;
+}
+
+.tv-modal-header .close-btn, #closeChartSettings {
+    background: none !important;
+    border: none !important;
+    color: var(--text-secondary) !important;
+    font-size: 16px !important;
+    cursor: pointer !important;
+    padding: 4px 8px !important;
+    border-radius: 4px !important;
+}
+
+.tv-modal-header .close-btn:hover {
+    background: var(--bg-tertiary) !important;
+    color: var(--text-primary) !important;
+}
+
+.tv-modal-body {
+    display: flex !important;
+    flex: 1 !important;
+    overflow: hidden !important;
+    position: relative !important;
+}
+
+.tv-sidebar-tabs {
+    width: 210px !important;
+    border-right: 1px solid var(--border-color) !important;
+    padding: 12px 0 !important;
+    background: var(--bg-primary) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+    position: relative !important;
+    gap: 2px !important;
+}
+
+.tv-tab-item {
+    width: 100% !important;
+    background: none !important;
+    border: none !important;
+    color: #9db2ce !important;
+    padding: 10px 18px !important;
+    text-align: left !important;
+    font-size: 13px !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    transition: background 0.2s, color 0.2s !important;
+}
+
+.tv-tab-item:hover {
+    background: var(--bg-secondary) !important;
+    color: var(--text-primary) !important;
+}
+
+.tv-tab-item.active {
+    background: var(--bg-tertiary) !important;
+    color: var(--accent-color) !important;
+    font-weight: 500 !important;
+    border-left: 3px solid var(--accent-color) !important;
+    padding-left: 15px !important;
+}
+
+/* Sidebar Footer (Template & Action Buttons) */
+.tv-sidebar-footer {
+    position: absolute !important;
+    bottom: 15px !important;
+    left: 15px !important;
+    right: 15px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+}
+
+.tv-template-select {
+    width: 100% !important;
+    background: var(--bg-tertiary) !important;
+    border: 1px solid var(--border-color) !important;
+    color: var(--text-primary) !important;
+    padding: 6px 10px !important;
+    border-radius: 4px !important;
+    font-size: 12px !important;
+    cursor: pointer !important;
+}
+
+.tv-action-buttons-group {
+    display: flex !important;
+    justify-content: space-between !important;
+    gap: 8px !important;
+}
+
+.tv-btn-cancel, .tv-btn-ok {
+    flex: 1 !important;
+    padding: 6px 12px !important;
+    border-radius: 4px !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    cursor: pointer !important;
+    text-align: center !important;
+}
+
+.tv-btn-cancel {
+    background: transparent !important;
+    border: 1px solid var(--border-color) !important;
+    color: var(--text-primary) !important;
+}
+
+.tv-btn-cancel:hover {
+    background: var(--bg-tertiary) !important;
+}
+
+.tv-btn-ok {
+    background: var(--accent-color) !important;
+    border: 1px solid var(--accent-color) !important;
+    color: #ffffff !important;
+}
+
+.tv-btn-ok:hover {
+    background: #1e53e5 !important;
+}
+
+/* Right Content Panels */
+.tv-content-panels {
+    flex: 1 !important;
+    padding: 24px !important;
+    overflow-y: auto !important;
+    background: var(--bg-secondary) !important;
+}
+
+.tv-panel-content {
+    display: none !important;
+}
+
+.tv-panel-content.active {
+    display: block !important;
+}
+
+.tv-panel-content h3, .tv-panel-content .section-title {
+    font-size: 11px !important;
+    text-transform: uppercase !important;
+    color: var(--text-secondary) !important;
+    letter-spacing: 0.8px !important;
+    margin-bottom: 12px !important;
+    margin-top: 20px !important;
+    font-weight: 700 !important;
+}
+
+.tv-panel-content h3:first-child {
+    margin-top: 0 !important;
+}
+
+.tv-control-row {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    margin-bottom: 12px !important;
+    font-size: 13px !important;
+}
+
+.tv-control-row label {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    cursor: pointer !important;
+    color: var(--text-primary) !important;
+}
+
+.tv-control-row input[type="checkbox"] {
+    accent-color: var(--accent-color) !important;
+    width: 16px !important;
+    height: 16px !important;
+    cursor: pointer !important;
+}
+
+.tv-select, .tv-input {
+    background: var(--bg-tertiary) !important;
+    border: 1px solid var(--border-color) !important;
+    color: var(--text-primary) !important;
+    padding: 5px 10px !important;
+    border-radius: 4px !important;
+    font-size: 13px !important;
+    outline: none !important;
+}
+
+.tv-select:focus, .tv-input:focus {
+    border-color: var(--accent-color) !important;
 }
