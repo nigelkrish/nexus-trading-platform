@@ -19,8 +19,9 @@ let replayIndex = 0;
 let replayTimer = null;
 let isPlaying = false;
 
-// WebSocket Debounce Timer State
+// WebSocket Debounce & Instance State
 let wsDebounceTimer = null;
+let wsConnectionId = 0;
 
 document.addEventListener('DOMContentLoaded', () => {
     window.currentSymbol = currentSymbol; // Sync initial global symbol
@@ -184,14 +185,18 @@ function resetAndReload() {
     oldestTimestamp = null;
     hasMoreData = true;
     
-    // පරණ WebSocket කනෙක්ෂන් එක සම්පූර්ණයෙන්ම පිරිසිදු කර ක්ලෝස් කිරීම
+    // Increment ID to invalidate pending/active WebSocket connections instantly
+    wsConnectionId++;
+    
     if (ws) {
         try {
             ws.onopen = null;
             ws.onmessage = null;
             ws.onerror = null;
             ws.onclose = null;
-            ws.close();
+            if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
+                ws.close();
+            }
         } catch (e) {}
         ws = null;
     }
@@ -276,12 +281,15 @@ async function loadMoreHistoricalData() {
     }
 }
 
-// 5. WebSocket Realtime Ticks (Completely Safe Closing & Error Prevention)
+// 5. WebSocket Realtime Ticks (Safe Instance & Lifecycle Tracking)
 function connectWebSocket(symbol, timeframe) {
     if (wsDebounceTimer) {
         clearTimeout(wsDebounceTimer);
         wsDebounceTimer = null;
     }
+
+    wsConnectionId++;
+    const currentId = wsConnectionId;
 
     if (ws) {
         try {
@@ -289,7 +297,9 @@ function connectWebSocket(symbol, timeframe) {
             ws.onmessage = null;
             ws.onerror = null;
             ws.onclose = null;
-            ws.close();
+            if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
+                ws.close();
+            }
         } catch (e) {}
         ws = null;
     }
@@ -297,7 +307,7 @@ function connectWebSocket(symbol, timeframe) {
     if (isReplayMode) return;
 
     wsDebounceTimer = setTimeout(() => {
-        if (isReplayMode) return;
+        if (isReplayMode || currentId !== wsConnectionId) return;
 
         const wsUrl = `wss://stream.binance.com/ws/${symbol.toLowerCase()}@kline_${timeframe}`;
         
@@ -306,8 +316,7 @@ function connectWebSocket(symbol, timeframe) {
             ws = socket;
 
             socket.onmessage = (event) => {
-                // කනෙක්ෂන් එක මාරු වී ඇත්නම් හෝ රෙප්ලේ මෝඩ් එකේ නම් ඊවෙන්ට් එක ඉග්නෝර් කරන්න
-                if (isReplayMode || ws !== socket) return;
+                if (isReplayMode || ws !== socket || currentId !== wsConnectionId) return;
                 
                 try {
                     const message = JSON.parse(event.data);
@@ -331,9 +340,7 @@ function connectWebSocket(symbol, timeframe) {
                 } catch (err) {}
             };
 
-            socket.onerror = (error) => {
-                // Prevent unhandled error logs in console
-            };
+            socket.onerror = () => {};
 
             socket.onclose = () => {
                 if (ws === socket) {
@@ -343,7 +350,7 @@ function connectWebSocket(symbol, timeframe) {
         } catch (err) {
             console.error('WebSocket connection error:', err);
         }
-    }, 300);
+    }, 250);
 }
 
 // --- Bar Replay Interactive Functions ---
@@ -358,6 +365,8 @@ function promptReplaySelection() {
 
 function activateReplayFromIndex(index) {
     isReplayMode = true;
+    wsConnectionId++;
+
     if (wsDebounceTimer) {
         clearTimeout(wsDebounceTimer);
         wsDebounceTimer = null;
@@ -368,7 +377,9 @@ function activateReplayFromIndex(index) {
             ws.onmessage = null;
             ws.onerror = null;
             ws.onclose = null;
-            ws.close();
+            if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
+                ws.close();
+            }
         } catch (e) {}
         ws = null;
     }
