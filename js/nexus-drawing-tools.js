@@ -1,4 +1,4 @@
-// --- Nexus Trading Platform - Advanced Drawing Manager (TradingView Style Rotated Text) ---
+// --- Nexus Trading Platform - Advanced Drawing Manager (TradingView Style Parallel Channel & Rotated Text) ---
 
 class TrendToolsModule {
     constructor() {
@@ -91,69 +91,113 @@ class TrendToolsModule {
             ctx.stroke();
         }
         else if (item.subType === 'parallelchannel') {
-            let heightOffset = (item.y2 - item.y1) / 2;
+            if (item.yOffset === undefined) item.yOffset = 60; // Default channel height offset
+            
+            // Top Line
             ctx.beginPath();
             ctx.moveTo(item.x1, item.y1);
             ctx.lineTo(item.x2, item.y2);
-            ctx.moveTo(item.x1, item.y1 + heightOffset);
-            ctx.lineTo(item.x2, item.y2 + heightOffset);
             ctx.stroke();
-            ctx.fillStyle = 'rgba(38, 166, 154, 0.08)';
-            ctx.fillRect(Math.min(item.x1, item.x2), Math.min(item.y1, item.y1 + heightOffset), Math.abs(item.x2 - item.x1), Math.abs(heightOffset));
+
+            // Bottom Line
+            ctx.beginPath();
+            ctx.moveTo(item.x1, item.y1 + item.yOffset);
+            ctx.lineTo(item.x2, item.y2 + item.yOffset);
+            ctx.stroke();
+
+            // Middle dashed line
+            ctx.save();
+            ctx.strokeStyle = item.color || '#26a69a';
+            ctx.setLineDash([4, 4]);
+            ctx.beginPath();
+            ctx.moveTo(item.x1, item.y1 + item.yOffset / 2);
+            ctx.lineTo(item.x2, item.y2 + item.yOffset / 2);
+            ctx.stroke();
+            ctx.restore();
+
+            // Channel Background Fill
+            ctx.fillStyle = 'rgba(38, 166, 154, 0.06)';
+            ctx.beginPath();
+            ctx.moveTo(item.x1, item.y1);
+            ctx.lineTo(item.x2, item.y2);
+            ctx.lineTo(item.x2, item.y2 + item.yOffset);
+            ctx.lineTo(item.x1, item.y1 + item.yOffset);
+            ctx.closePath();
+            ctx.fill();
         }
 
-        // --- TradingView Style Rotated & Aligned Text Rendering ---
-        const midX = (item.x1 + item.x2) / 2;
-        const midY = (item.y1 + item.y2) / 2;
-        
-        let angle = Math.atan2(item.y2 - item.y1, item.x2 - item.x1);
-        
-        // Text එක උඩුකුරුව (readable) තබා ගැනීමට angle එක ඍණ/ධ්‍රැව මාරු කිරීම
-        if (angle > Math.PI / 2) angle -= Math.PI;
-        if (angle < -Math.PI / 2) angle += Math.PI;
+        // --- TradingView Style Rotated & Aligned Text Rendering (For non-channels or general use) ---
+        if (item.subType !== 'parallelchannel') {
+            const midX = (item.x1 + item.x2) / 2;
+            const midY = (item.y1 + item.y2) / 2;
+            let angle = Math.atan2(item.y2 - item.y1, item.x2 - item.x1);
+            
+            if (angle > Math.PI / 2) angle -= Math.PI;
+            if (angle < -Math.PI / 2) angle += Math.PI;
 
-        ctx.save();
-        ctx.translate(midX, midY);
-        ctx.rotate(angle);
+            ctx.save();
+            ctx.translate(midX, midY);
+            ctx.rotate(angle);
 
-        if (item.text) {
-            ctx.font = '12px Inter, sans-serif';
-            ctx.fillStyle = item.color || '#26a69a';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'bottom';
-            ctx.fillText(item.text, 0, -6);
-        } else if (isSelected) {
-            ctx.font = '11px Inter, sans-serif';
-            ctx.fillStyle = '#848e9c';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'bottom';
-            ctx.fillText('+ Add text', 0, -6);
+            if (item.text) {
+                ctx.font = '12px Inter, sans-serif';
+                ctx.fillStyle = item.color || '#26a69a';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'bottom';
+                ctx.fillText(item.text, 0, -6);
+            } else if (isSelected) {
+                ctx.font = '11px Inter, sans-serif';
+                ctx.fillStyle = '#848e9c';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'bottom';
+                ctx.fillText('+ Add text', 0, -6);
+            }
+            ctx.restore();
         }
-        ctx.restore();
 
         // Render TradingView Style Selection Handles & Boxes
         if (isSelected) {
-            const drawHandle = (hx, hy) => {
+            const drawHandle = (hx, hy, isSquare = false) => {
                 ctx.save();
                 ctx.fillStyle = '#ffffff';
                 ctx.strokeStyle = '#2962ff';
                 ctx.lineWidth = 2;
-                ctx.beginPath();
-                ctx.arc(hx, hy, 5, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.stroke();
+                if (isSquare) {
+                    ctx.fillRect(hx - 5, hy - 5, 10, 10);
+                    ctx.strokeRect(hx - 5, hy - 5, 10, 10);
+                } else {
+                    ctx.beginPath();
+                    ctx.arc(hx, hy, 5, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.stroke();
+                }
                 ctx.restore();
             };
 
-            drawHandle(item.x1, item.y1);
-            drawHandle(item.x2, item.y2);
+            if (item.subType === 'parallelchannel') {
+                if (item.yOffset === undefined) item.yOffset = 60;
+                // Top line handles (P1, Center-Top, P2)
+                drawHandle(item.x1, item.y1, false);
+                drawHandle((item.x1 + item.x2) / 2, (item.y1 + item.y2) / 2, true);
+                drawHandle(item.x2, item.y2, false);
 
-            ctx.save();
-            ctx.strokeStyle = '#2962ff';
-            ctx.lineWidth = 1;
-            ctx.setLineDash([2, 2]);
-            ctx.strokeRect(midX - 35, midY - 18, 70, 24);
-            ctx.restore();
+                // Bottom line handles (P3, Center-Bottom, P4)
+                drawHandle(item.x1, item.y1 + item.yOffset, false);
+                drawHandle((item.x1 + item.x2) / 2, (item.y1 + item.y2) / 2 + item.yOffset, true);
+                drawHandle(item.x2, item.y2 + item.yOffset, false);
+            } else {
+                drawHandle(item.x1, item.y1, false);
+                drawHandle(item.x2, item.y2, false);
+
+                const midX = (item.x1 + item.x2) / 2;
+                const midY = (item.y1 + item.y2) / 2;
+                ctx.save();
+                ctx.strokeStyle = '#2962ff';
+                ctx.lineWidth = 1;
+                ctx.setLineDash([2, 2]);
+                ctx.strokeRect(midX - 35, midY - 18, 70, 24);
+                ctx.restore();
+            }
         }
     }
 }
@@ -330,7 +374,18 @@ class NexusDrawingManager {
             if (e.button === 2) {
                 e.preventDefault();
                 for (let item of this.drawings) {
-                    if (this.pDistance(mouseX, mouseY, item.x1, item.y1, item.x2, item.y2) < 10) {
+                    if (item.subType === 'parallelchannel') {
+                        if (Math.hypot(mouseX - item.x1, mouseY - item.y1) < 10 || 
+                            Math.hypot(mouseX - item.x2, mouseY - item.y2) < 10 ||
+                            Math.hypot(mouseX - item.x1, mouseY - (item.y1 + item.yOffset)) < 10 ||
+                            Math.hypot(mouseX - item.x2, mouseY - (item.y2 + item.yOffset)) < 10) {
+                            this.selectedDrawing = item;
+                            this.showFloatingToolbar(item);
+                            this.redrawCanvas();
+                            this.showSettingsModal(item, e.clientX, e.clientY);
+                            break;
+                        }
+                    } else if (this.pDistance(mouseX, mouseY, item.x1, item.y1, item.x2, item.y2) < 10) {
                         this.selectedDrawing = item;
                         this.showFloatingToolbar(item);
                         this.redrawCanvas();
@@ -345,37 +400,61 @@ class NexusDrawingManager {
             if (e.button === 0) {
                 if (this.activeTool === 'cursor') {
                     if (this.selectedDrawing) {
-                        const distP1 = Math.hypot(mouseX - this.selectedDrawing.x1, mouseY - this.selectedDrawing.y1);
-                        const distP2 = Math.hypot(mouseX - this.selectedDrawing.x2, mouseY - this.selectedDrawing.y2);
-                        
-                        if (distP1 < 10) {
-                            this.draggingHandle = 'p1';
-                            dragStartX = mouseX;
-                            dragStartY = mouseY;
-                            return;
-                        } else if (distP2 < 10) {
-                            this.draggingHandle = 'p2';
-                            dragStartX = mouseX;
-                            dragStartY = mouseY;
-                            return;
-                        }
+                        if (this.selectedDrawing.subType === 'parallelchannel') {
+                            if (item.yOffset === undefined) item.yOffset = 60;
+                            const hDistP1 = Math.hypot(mouseX - this.selectedDrawing.x1, mouseY - this.selectedDrawing.y1);
+                            const hDistP2 = Math.hypot(mouseX - this.selectedDrawing.x2, mouseY - this.selectedDrawing.y2);
+                            const hDistP3 = Math.hypot(mouseX - this.selectedDrawing.x1, mouseY - (this.selectedDrawing.y1 + this.selectedDrawing.yOffset));
+                            const hDistP4 = Math.hypot(mouseX - this.selectedDrawing.x2, mouseY - (this.selectedDrawing.y2 + this.selectedDrawing.yOffset));
+                            const hDistResize = Math.hypot(mouseX - (this.selectedDrawing.x1 + this.selectedDrawing.x2)/2, mouseY - (this.selectedDrawing.y1 + this.selectedDrawing.y2)/2 - this.selectedDrawing.yOffset/2);
 
-                        const midX = (this.selectedDrawing.x1 + this.selectedDrawing.x2) / 2;
-                        const midY = (this.selectedDrawing.y1 + this.selectedDrawing.y2) / 2;
-                        if (Math.abs(mouseX - midX) < 35 && Math.abs(mouseY - midY) < 12) {
-                            let newText = prompt('Enter text for this drawing:', this.selectedDrawing.text || '');
-                            if (newText !== null) {
-                                this.selectedDrawing.text = newText;
-                                this.redrawCanvas();
-                                this.showFloatingToolbar(this.selectedDrawing);
+                            if (hDistP1 < 10) { this.draggingHandle = 'pc_p1'; dragStartX = mouseX; dragStartY = mouseY; return; }
+                            if (hDistP2 < 10) { this.draggingHandle = 'pc_p2'; dragStartX = mouseX; dragStartY = mouseY; return; }
+                            if (hDistP3 < 10) { this.draggingHandle = 'pc_p3'; dragStartX = mouseX; dragStartY = mouseY; return; }
+                            if (hDistP4 < 10) { this.draggingHandle = 'pc_p4'; dragStartX = mouseX; dragStartY = mouseY; return; }
+                            if (hDistResize < 12) { this.draggingHandle = 'pc_resize'; dragStartX = mouseX; dragStartY = mouseY; return; }
+                        } else {
+                            const distP1 = Math.hypot(mouseX - this.selectedDrawing.x1, mouseY - this.selectedDrawing.y1);
+                            const distP2 = Math.hypot(mouseX - this.selectedDrawing.x2, mouseY - this.selectedDrawing.y2);
+                            
+                            if (distP1 < 10) {
+                                this.draggingHandle = 'p1';
+                                dragStartX = mouseX;
+                                dragStartY = mouseY;
+                                return;
+                            } else if (distP2 < 10) {
+                                this.draggingHandle = 'p2';
+                                dragStartX = mouseX;
+                                dragStartY = mouseY;
+                                return;
                             }
-                            return;
+
+                            const midX = (this.selectedDrawing.x1 + this.selectedDrawing.x2) / 2;
+                            const midY = (this.selectedDrawing.y1 + this.selectedDrawing.y2) / 2;
+                            if (Math.abs(mouseX - midX) < 35 && Math.abs(mouseY - midY) < 12) {
+                                let newText = prompt('Enter text for this drawing:', this.selectedDrawing.text || '');
+                                if (newText !== null) {
+                                    this.selectedDrawing.text = newText;
+                                    this.redrawCanvas();
+                                    this.showFloatingToolbar(this.selectedDrawing);
+                                }
+                                return;
+                            }
                         }
                     }
 
                     let found = null;
                     for (let item of this.drawings) {
-                        if (this.pDistance(mouseX, mouseY, item.x1, item.y1, item.x2, item.y2) < 10) {
+                        if (item.subType === 'parallelchannel') {
+                            if (item.yOffset === undefined) item.yOffset = 60;
+                            if (Math.hypot(mouseX - item.x1, mouseY - item.y1) < 15 || 
+                                Math.hypot(mouseX - item.x2, mouseY - item.y2) < 15 ||
+                                Math.hypot(mouseX - item.x1, mouseY - (item.y1 + item.yOffset)) < 15 ||
+                                Math.hypot(mouseX - item.x2, mouseY - (item.y2 + item.yOffset)) < 15) {
+                                found = item;
+                                break;
+                            }
+                        } else if (this.pDistance(mouseX, mouseY, item.x1, item.y1, item.x2, item.y2) < 10) {
                             found = item;
                             break;
                         }
@@ -404,6 +483,7 @@ class NexusDrawingManager {
                     subType: this.activeTool === 'trendline' ? this.activeSubTool : this.activeTool,
                     x1: startX, y1: startY,
                     x2: startX, y2: startY,
+                    yOffset: this.activeSubTool === 'parallelchannel' ? 60 : undefined,
                     color: '#26a69a',
                     width: 2,
                     text: ''
@@ -427,6 +507,24 @@ class NexusDrawingManager {
                 } else if (this.draggingHandle === 'p2') {
                     this.selectedDrawing.x2 = mouseX;
                     this.selectedDrawing.y2 = mouseY;
+                } else if (this.draggingHandle === 'pc_p1') {
+                    let oldDX = this.selectedDrawing.x2 - this.selectedDrawing.x1;
+                    let oldDY = this.selectedDrawing.y2 - this.selectedDrawing.y1;
+                    this.selectedDrawing.x1 = mouseX;
+                    this.selectedDrawing.y1 = mouseY;
+                    this.selectedDrawing.x2 = mouseX + oldDX;
+                    this.selectedDrawing.y2 = mouseY + oldDY;
+                } else if (this.draggingHandle === 'pc_p2') {
+                    this.selectedDrawing.x2 = mouseX;
+                    this.selectedDrawing.y2 = mouseY;
+                } else if (this.draggingHandle === 'pc_p3') {
+                    this.selectedDrawing.x1 = mouseX;
+                    this.selectedDrawing.yOffset = mouseY - this.selectedDrawing.y1;
+                } else if (this.draggingHandle === 'pc_p4') {
+                    this.selectedDrawing.x2 = mouseX;
+                    this.selectedDrawing.yOffset = mouseY - this.selectedDrawing.y2;
+                } else if (this.draggingHandle === 'pc_resize') {
+                    this.selectedDrawing.yOffset += dy;
                 } else if (this.draggingHandle === 'move') {
                     this.selectedDrawing.x1 += dx;
                     this.selectedDrawing.y1 += dy;
@@ -504,6 +602,8 @@ class NexusDrawingManager {
             box-shadow: 0 6px 20px rgba(0,0,0,0.5); user-select: none; cursor: grab;
         `;
 
+        let textBtnHTML = drawing.subType === 'parallelchannel' ? '' : `<button id="ftTextBtn" style="background:#2a2e39; color:#d1d4dc; border:1px solid #363c4e; border-radius:4px; padding:2px 6px; font-size:12px; cursor:pointer;" title="Add/Edit Text">T Text</button>`;
+
         bar.innerHTML = `
             <span style="color: #848e9c; cursor: grab; font-size: 14px;" title="Drag Toolbar">⠿</span>
             <input type="color" id="ftColor" value="${drawing.color || '#26a69a'}" style="border:none; width:22px; height:22px; background:none; cursor:pointer;" title="Change Color">
@@ -513,7 +613,7 @@ class NexusDrawingManager {
                 <option value="3" ${drawing.width==3?'selected':''}>3px</option>
                 <option value="4" ${drawing.width==4?'selected':''}>4px</option>
             </select>
-            <button id="ftTextBtn" style="background:#2a2e39; color:#d1d4dc; border:1px solid #363c4e; border-radius:4px; padding:2px 6px; font-size:12px; cursor:pointer;" title="Add/Edit Text">T Text</button>
+            ${textBtnHTML}
             <button id="ftSettingsBtn" style="background:#2a2e39; color:#d1d4dc; border:1px solid #363c4e; border-radius:4px; padding:2px 6px; font-size:12px; cursor:pointer;" title="Settings Panel">⚙️</button>
             <div style="width:1px; height:16px; background:#363c4e;"></div>
             <button id="ftDel" style="background:transparent; border:none; color:#ef5350; cursor:pointer; font-size:14px;" title="Delete">🗑️</button>
@@ -553,13 +653,15 @@ class NexusDrawingManager {
             this.redrawCanvas();
         };
 
-        document.getElementById('ftTextBtn').onclick = () => {
-            let txt = prompt('Enter text for this tool:', drawing.text || '');
-            if (txt !== null) {
-                drawing.text = txt;
-                this.redrawCanvas();
-            }
-        };
+        if (drawing.subType !== 'parallelchannel') {
+            document.getElementById('ftTextBtn').onclick = () => {
+                let txt = prompt('Enter text for this tool:', drawing.text || '');
+                if (txt !== null) {
+                    drawing.text = txt;
+                    this.redrawCanvas();
+                }
+            };
+        }
 
         document.getElementById('ftSettingsBtn').onclick = (e) => {
             const rect = e.target.getBoundingClientRect();
@@ -586,6 +688,13 @@ class NexusDrawingManager {
             box-shadow: 0 8px 24px rgba(0,0,0,0.6); padding: 14px; font-family: Inter, sans-serif; color: #d1d4dc; user-select: none;
         `;
 
+        let textInputHTML = drawing.subType === 'parallelchannel' ? '' : `
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+                <span>Custom Text:</span>
+                <input type="text" id="modalText" value="${drawing.text || ''}" placeholder="Enter text..." style="background:#2a2e39; color:#fff; border:1px solid #363c4e; border-radius:4px; padding:5px 8px; font-size:12px; outline:none;">
+            </div>
+        `;
+
         modal.innerHTML = `
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #363c4e; padding-bottom: 8px;">
                 <span style="font-weight: 600; font-size: 13px;">Drawing Settings</span>
@@ -605,10 +714,7 @@ class NexusDrawingManager {
                         <option value="4" ${drawing.width==4?'selected':''}>4px</option>
                     </select>
                 </div>
-                <div style="display: flex; flex-direction: column; gap: 4px;">
-                    <span>Custom Text:</span>
-                    <input type="text" id="modalText" value="${drawing.text || ''}" placeholder="Enter text..." style="background:#2a2e39; color:#fff; border:1px solid #363c4e; border-radius:4px; padding:5px 8px; font-size:12px; outline:none;">
-                </div>
+                ${textInputHTML}
             </div>
         `;
 
@@ -630,10 +736,12 @@ class NexusDrawingManager {
             this.redrawCanvas();
         };
 
-        document.getElementById('modalText').oninput = (e) => {
-            drawing.text = e.target.value;
-            this.redrawCanvas();
-        };
+        if (drawing.subType !== 'parallelchannel') {
+            document.getElementById('modalText').oninput = (e) => {
+                drawing.text = e.target.value;
+                this.redrawCanvas();
+            };
+        }
 
         setTimeout(() => {
             window.addEventListener('click', function closeMod(evt) {
