@@ -50,6 +50,7 @@ function initChart() {
         },
         rightPriceScale: {
             borderColor: '#2a2e39',
+            autoScale: true, // ස්කේල් එක ස්වයංක්‍රීයව වෙනස් වීමට සකස් කර ඇත
         },
         timeScale: {
             borderColor: '#2a2e39',
@@ -217,6 +218,14 @@ function resetAndReload() {
 async function loadChartData(symbol, timeframe) {
     try {
         window.currentSymbol = symbol;
+        
+        // සිම්බල් එක මාරු වන විට ප්‍රයිස් ස්කේල් එක සම්පූර්ණයෙන්ම අලුත් සිම්බල් එකට සකස් කර ගැනීම
+        if (chart) {
+            chart.priceScale('right').applyOptions({
+                autoScale: true,
+            });
+        }
+
         const url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${timeframe}&limit=500`;
         const response = await fetch(url);
         const data = await response.json();
@@ -234,7 +243,7 @@ async function loadChartData(symbol, timeframe) {
         oldestTimestamp = data[0][0];
         fullHistoricalData = formattedData;
 
-        if (!isReplayMode) {
+        if (!isReplayMode && candlestickSeries) {
             candlestickSeries.setData(formattedData);
             chart.timeScale().fitContent();
             
