@@ -1,4 +1,4 @@
-// --- Nexus Trading Platform - Script.js (Instant Symbol Switch & Real-time Live Fix) ---
+// --- Nexus Trading Platform - Script.js (Instant Symbol Switch & Master Settings Integration) ---
 
 let chart;
 let candlestickSeries;
