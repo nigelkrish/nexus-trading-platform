@@ -1,9 +1,8 @@
-// --- Nexus Trading Platform - TradingView Style Chart Settings Module ---
+// --- Nexus Trading Platform - Chart Settings Modal Module ---
 
 class ChartSettingsModal {
     constructor() {
         this.modalElement = null;
-        this.currentTab = 'symbol';
         this.init();
     }
 
@@ -13,225 +12,226 @@ class ChartSettingsModal {
     }
 
     createModalHTML() {
-        if (document.getElementById('tvChartSettingsModal')) return;
+        if (document.getElementById('tradingViewSettingsModal')) return;
 
         const modalHTML = `
-        <div id="tvChartSettingsModal" class="nexus-modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10000; justify-content: center; align-items: center;">
-            <div class="tv-settings-container" style="background: #1e222d; width: 750px; height: 520px; border-radius: 8px; border: 1px solid #2a2e39; display: flex; flex-direction: column; color: #d1d4dc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
-                
+        <div id="tradingViewSettingsModal" class="tv-modal-overlay" style="display: none;">
+            <div class="tv-modal-container">
                 <!-- Modal Header -->
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; border-bottom: 1px solid #2a2e39;">
-                    <h3 style="margin: 0; font-size: 16px; font-weight: 600; color: #fff;">Settings</h3>
-                    <button id="tvCloseSettings" style="background: none; border: none; color: #9598a1; font-size: 20px; cursor: pointer; padding: 0;">&times;</button>
+                <div class="tv-modal-header">
+                    <h2>Settings</h2>
+                    <button class="tv-close-btn" id="tvCloseModal">&times;</button>
                 </div>
 
                 <!-- Modal Body Layout -->
-                <div style="display: flex; flex: 1; overflow: hidden;">
-                    
+                <div class="tv-modal-body">
                     <!-- Left Sidebar Tabs -->
-                    <div style="width: 200px; border-right: 1px solid #2a2e39; padding: 10px 0; background: #131722;">
-                        <button class="tv-tab-btn active" data-target="tab-symbol" style="width: 100%; text-align: left; padding: 10px 20px; background: #2a2e39; border: none; color: #fff; cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 10px;">📊 Symbol</button>
-                        <button class="tv-tab-btn" data-target="tab-status" style="width: 100%; text-align: left; padding: 10px 20px; background: none; border: none; color: #9598a1; cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 10px;">📑 Status line</button>
-                        <button class="tv-tab-btn" data-target="tab-scales" style="width: 100%; text-align: left; padding: 10px 20px; background: none; border: none; color: #9598a1; cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 10px;">📐 Scales and lines</button>
-                        <button class="tv-tab-btn" data-target="tab-canvas" style="width: 100%; text-align: left; padding: 10px 20px; background: none; border: none; color: #9598a1; cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 10px;">🎨 Canvas</button>
-                        <button class="tv-tab-btn" data-target="tab-trading" style="width: 100%; text-align: left; padding: 10px 20px; background: none; border: none; color: #9598a1; cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 10px;">🛒 Trading</button>
-                        <button class="tv-tab-btn" data-target="tab-alerts" style="width: 100%; text-align: left; padding: 10px 20px; background: none; border: none; color: #9598a1; cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 10px;">⏰ Alerts</button>
-                        <button class="tv-tab-btn" data-target="tab-events" style="width: 100%; text-align: left; padding: 10px 20px; background: none; border: none; color: #9598a1; cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 10px;">📅 Events</button>
+                    <div class="tv-sidebar-tabs">
+                        <button class="tv-tab-item active" data-target="panel-symbol">
+                            <span class="tv-icon">📊</span> Symbol
+                        </button>
+                        <button class="tv-tab-item" data-target="panel-status">
+                            <span class="tv-icon">➖</span> Status line
+                        </button>
+                        <button class="tv-tab-item" data-target="panel-scales">
+                            <span class="tv-icon">📈</span> Scales and lines
+                        </button>
+                        <button class="tv-tab-item" data-target="panel-canvas">
+                            <span class="tv-icon">🎨</span> Canvas
+                        </button>
+                        <button class="tv-tab-item" data-target="panel-trading">
+                            <span class="tv-icon">💰</span> Trading
+                        </button>
+                        <button class="tv-tab-item" data-target="panel-alerts">
+                            <span class="tv-icon">⏰</span> Alerts
+                        </button>
+                        <button class="tv-tab-item" data-target="panel-events">
+                            <span class="tv-icon">📅</span> Events
+                        </button>
                     </div>
 
                     <!-- Right Content Panels -->
-                    <div style="flex: 1; padding: 20px; overflow-y: auto;">
-                        
-                        <!-- 1. Symbol Tab -->
-                        <div id="tab-symbol" class="tv-tab-pane" style="display: block;">
-                            <div style="font-size: 11px; color: #9598a1; font-weight: bold; margin-bottom: 15px; letter-spacing: 0.5px;">CANDLES</div>
-                            
-                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
-                                <label style="font-size: 13px; display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                                    <input type="checkbox" id="tvBodyToggle" checked style="accent-color: #2962ff;"> Body
-                                </label>
-                                <div style="display: flex; gap: 8px;">
-                                    <input type="color" id="tvUpColor" value="#26a69a" style="border: none; width: 28px; height: 22px; cursor: pointer; background: none;">
-                                    <input type="color" id="tvDownColor" value="#ef5350" style="border: none; width: 28px; height: 22px; cursor: pointer; background: none;">
+                    <div class="tv-content-panels">
+                        <!-- Symbol Panel -->
+                        <div class="tv-panel-content active" id="panel-symbol">
+                            <div class="tv-section-title">CANDLES</div>
+                            <div class="tv-control-row">
+                                <label><input type="checkbox" id="tvColorBarsPrev"> Color bars based on previous close</label>
+                            </div>
+                            <div class="tv-control-row">
+                                <label><input type="checkbox" id="tvBodyToggle" checked> Body</label>
+                                <div class="tv-color-pickers">
+                                    <input type="color" id="tvUpBodyColor" value="#26a69a">
+                                    <input type="color" id="tvDownBodyColor" value="#ef5350">
+                                </div>
+                            </div>
+                            <div class="tv-control-row">
+                                <label><input type="checkbox" id="tvBordersToggle" checked> Borders</label>
+                                <div class="tv-color-pickers">
+                                    <input type="color" id="tvUpBorderColor" value="#26a69a">
+                                    <input type="color" id="tvDownBorderColor" value="#ef5350">
+                                </div>
+                            </div>
+                            <div class="tv-control-row">
+                                <label><input type="checkbox" id="tvWickToggle" checked> Wick</label>
+                                <div class="tv-color-pickers">
+                                    <input type="color" id="tvUpWickColor" value="#26a69a">
+                                    <input type="color" id="tvDownWickColor" value="#ef5350">
                                 </div>
                             </div>
 
-                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
-                                <label style="font-size: 13px; display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                                    <input type="checkbox" id="tvBordersToggle" checked style="accent-color: #2962ff;"> Borders
-                                </label>
-                                <div style="display: flex; gap: 8px;">
-                                    <input type="color" id="tvBorderUpColor" value="#26a69a" style="border: none; width: 28px; height: 22px; cursor: pointer; background: none;">
-                                    <input type="color" id="tvBorderDownColor" value="#ef5350" style="border: none; width: 28px; height: 22px; cursor: pointer; background: none;">
-                                </div>
+                            <div class="tv-section-title" style="margin-top: 20px;">DATA MODIFICATION</div>
+                            <div class="tv-control-row select-row">
+                                <span>Precision</span>
+                                <select id="tvPrecisionSelect">
+                                    <option value="default">Default</option>
+                                    <option value="2">0.01</option>
+                                    <option value="4">0.0001</option>
+                                </select>
                             </div>
-
-                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 25px;">
-                                <label style="font-size: 13px; display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                                    <input type="checkbox" id="tvWickToggle" checked style="accent-color: #2962ff;"> Wick
-                                </label>
-                                <div style="display: flex; gap: 8px;">
-                                    <input type="color" id="tvWickUpColor" value="#26a69a" style="border: none; width: 28px; height: 22px; cursor: pointer; background: none;">
-                                    <input type="color" id="tvWickDownColor" value="#ef5350" style="border: none; width: 28px; height: 22px; cursor: pointer; background: none;">
-                                </div>
-                            </div>
-
-                            <div style="font-size: 11px; color: #9598a1; font-weight: bold; margin-bottom: 15px; letter-spacing: 0.5px;">DATA MODIFICATION</div>
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                                <span style="font-size: 13px;">Timezone</span>
-                                <select id="tvTimezoneSelect" style="background: #131722; color: #d1d4dc; border: 1px solid #2a2e39; padding: 6px 10px; border-radius: 4px; width: 180px;">
+                            <div class="tv-control-row select-row">
+                                <span>Timezone</span>
+                                <select id="tvTimezoneSelect">
                                     <option value="Asia/Colombo">(UTC+5:30) Colombo</option>
-                                    <option value="Etc/UTC">UTC</option>
-                                    <option value="America/New_York">(UTC-5) New York</option>
+                                    <option value="UTC">UTC</option>
                                 </select>
                             </div>
                         </div>
 
-                        <!-- 2. Status Line Tab -->
-                        <div id="tab-status" class="tv-tab-pane" style="display: none;">
-                            <div style="font-size: 11px; color: #9598a1; font-weight: bold; margin-bottom: 15px;">LOGO & TITLE</div>
-                            <label style="font-size: 13px; display: flex; align-items: center; gap: 8px; margin-bottom: 12px; cursor: pointer;">
-                                <input type="checkbox" checked style="accent-color: #2962ff;"> Symbol Name
-                            </label>
-                            <label style="font-size: 13px; display: flex; align-items: center; gap: 8px; margin-bottom: 12px; cursor: pointer;">
-                                <input type="checkbox" checked style="accent-color: #2962ff;"> Open market status
-                            </label>
-                            <label style="font-size: 13px; display: flex; align-items: center; gap: 8px; margin-bottom: 12px; cursor: pointer;">
-                                <input type="checkbox" checked style="accent-color: #2962ff;"> OHLC values
-                            </label>
+                        <!-- Status Line Panel -->
+                        <div class="tv-panel-content" id="panel-status">
+                            <div class="tv-section-title">VALUES</div>
+                            <div class="tv-control-row"><label><input type="checkbox" checked> Symbol name</label></div>
+                            <div class="tv-control-row"><label><input type="checkbox" checked> Open market status</label></div>
+                            <div class="tv-control-row"><label><input type="checkbox" checked> OHLC values</label></div>
+                            <div class="tv-control-row"><label><input type="checkbox" checked> Bar change values</label></div>
                         </div>
 
-                        <!-- 3. Scales and Lines Tab -->
-                        <div id="tab-scales" class="tv-tab-pane" style="display: none;">
-                            <div style="font-size: 11px; color: #9598a1; font-weight: bold; margin-bottom: 15px;">GRID LINES</div>
-                            <label style="font-size: 13px; display: flex; align-items: center; gap: 8px; margin-bottom: 12px; cursor: pointer;">
-                                <input type="checkbox" id="tvGridVert" checked style="accent-color: #2962ff;"> Vertical Grid Lines
-                            </label>
-                            <label style="font-size: 13px; display: flex; align-items: center; gap: 8px; margin-bottom: 12px; cursor: pointer;">
-                                <input type="checkbox" id="tvGridHorz" checked style="accent-color: #2962ff;"> Horizontal Grid Lines
-                            </label>
+                        <!-- Scales and Lines Panel -->
+                        <div class="tv-panel-content" id="panel-scales">
+                            <div class="tv-section-title">AXES</div>
+                            <div class="tv-control-row"><label><input type="checkbox" checked> Values in price scale</label></div>
+                            <div class="tv-control-row"><label><input type="checkbox" checked> Dates on time scale</label></div>
                         </div>
 
-                        <!-- 4. Canvas Tab -->
-                        <div id="tab-canvas" class="tv-tab-pane" style="display: none;">
-                            <div style="font-size: 11px; color: #9598a1; font-weight: bold; margin-bottom: 15px;">BACKGROUND</div>
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                                <span style="font-size: 13px;">Background Color</span>
-                                <input type="color" id="tvBgColor" value="#131722" style="border: none; width: 35px; height: 25px; cursor: pointer; background: none;">
+                        <!-- Canvas Panel -->
+                        <div class="tv-panel-content" id="panel-canvas">
+                            <div class="tv-section-title">GRID LINES</div>
+                            <div class="tv-control-row"><label><input type="checkbox" id="tvVertGridToggle" checked> Vertical grid lines</label></div>
+                            <div class="tv-control-row"><label><input type="checkbox" id="tvHorzGridToggle" checked> Horizontal grid lines</label></div>
+                            <div class="tv-section-title" style="margin-top: 20px;">BACKGROUND</div>
+                            <div class="tv-control-row select-row">
+                               <span>Color</span>
+                               <input type="color" id="tvBgColor" value="#131722">
                             </div>
                         </div>
 
-                        <!-- 5. Trading Tab -->
-                        <div id="tab-trading" class="tv-tab-pane" style="display: none;">
-                            <div style="font-size: 11px; color: #9598a1; font-weight: bold; margin-bottom: 15px;">TRADING PANELS</div>
-                            <label style="font-size: 13px; display: flex; align-items: center; gap: 8px; margin-bottom: 12px; cursor: pointer;">
-                                <input type="checkbox" checked style="accent-color: #2962ff;"> Buy/Sell execution buttons on chart
-                            </label>
+                        <!-- Trading Panel -->
+                        <div class="tv-panel-content" id="panel-trading">
+                            <div class="tv-section-title">TRADING OPTIONS</div>
+                            <div class="tv-control-row"><label><input type="checkbox" checked> Instant orders placement</label></div>
+                            <div class="tv-control-row"><label><input type="checkbox" checked> Position lines</label></div>
                         </div>
 
-                        <!-- 6. Alerts Tab -->
-                        <div id="tab-alerts" class="tv-tab-pane" style="display: none;">
-                            <div style="font-size: 11px; color: #9598a1; font-weight: bold; margin-bottom: 15px;">LINES</div>
-                            <label style="font-size: 13px; display: flex; align-items: center; gap: 8px; margin-bottom: 12px; cursor: pointer;">
-                                <input type="checkbox" checked style="accent-color: #2962ff;"> Show active alert lines
-                            </label>
+                        <!-- Alerts Panel -->
+                        <div class="tv-panel-content" id="panel-alerts">
+                            <div class="tv-section-title">APPEARANCE</div>
+                            <div class="tv-control-row"><label><input type="checkbox" checked> Show alert lines</label></div>
                         </div>
 
-                        <!-- 7. Events Tab -->
-                        <div id="tab-events" class="tv-tab-pane" style="display: none;">
-                            <div style="font-size: 11px; color: #9598a1; font-weight: bold; margin-bottom: 15px;">CALENDAR</div>
-                            <label style="font-size: 13px; display: flex; align-items: center; gap: 8px; margin-bottom: 12px; cursor: pointer;">
-                                <input type="checkbox" style="accent-color: #2962ff;"> Economic calendar events on chart
-                            </label>
+                        <!-- Events Panel -->
+                        <div class="tv-panel-content" id="panel-events">
+                            <div class="tv-section-title">CHART EVENTS</div>
+                            <div class="tv-control-row"><label><input type="checkbox"> Economic events on chart</label></div>
                         </div>
-
                     </div>
                 </div>
 
                 <!-- Modal Footer -->
-                <div style="display: flex; justify-content: flex-end; align-items: center; padding: 12px 20px; border-top: 1px solid #2a2e39; gap: 10px; background: #181c25;">
-                    <button id="tvCancelSettings" style="background: transparent; border: 1px solid #2a2e39; color: #d1d4dc; padding: 6px 16px; border-radius: 4px; cursor: pointer; font-size: 13px;">Cancel</button>
-                    <button id="tvOkSettings" style="background: #2962ff; border: none; color: #fff; padding: 6px 20px; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 500;">Ok</button>
+                <div class="tv-modal-footer">
+                    <div class="tv-template-dropdown">
+                        <select id="tvTemplateSelect">
+                            <option value="default">Template</option>
+                            <option value="saved">Save As...</option>
+                        </select>
+                    </div>
+                    <div class="tv-footer-buttons">
+                        <button class="tv-btn-cancel" id="tvCancelBtn">Cancel</button>
+                        <button class="tv-btn-ok" id="tvOkBtn">Ok</button>
+                    </div>
                 </div>
-
             </div>
         </div>
         `;
 
         document.body.insertAdjacentHTML('beforeend', modalHTML);
-        this.modalElement = document.getElementById('tvChartSettingsModal');
+        this.modalElement = document.getElementById('tradingViewSettingsModal');
     }
 
     attachEventListeners() {
         const modal = this.modalElement;
         if (!modal) return;
 
-        // Tab Switching Logic
-        const tabBtns = modal.querySelectorAll('.tv-tab-btn');
-        tabBtns.forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                tabBtns.forEach(b => {
-                    b.classList.remove('active');
-                    b.style.background = 'none';
-                    b.style.color = '#9598a1';
+        // Tab Switching logic
+        const tabs = modal.querySelectorAll('.tv-tab-item');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', (e) => {
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+
+                const targetId = tab.getAttribute('data-target');
+                modal.querySelectorAll('.tv-panel-content').forEach(panel => {
+                    panel.classList.remove('active');
                 });
-                
-                const targetId = btn.getAttribute('data-target');
-                modal.querySelectorAll('.tv-tab-pane').forEach(pane => pane.style.display = 'none');
-                
-                btn.classList.add('active');
-                btn.style.background = '#2a2e39';
-                btn.style.color = '#fff';
-                
-                const targetPane = modal.querySelector(`#${targetId}`);
-                if (targetPane) targetPane.style.display = 'block';
+                modal.querySelector(`#${targetId}`).classList.add('active');
             });
         });
 
-        // Close & Cancel Buttons
-        const closeModal = () => modal.style.display = 'none';
-        modal.querySelector('#tvCloseSettings').addEventListener('click', closeModal);
-        modal.querySelector('#tvCancelSettings').addEventListener('click', closeModal);
+        // Close / Cancel / OK buttons
+        const closeBtn = modal.querySelector('#tvCloseModal');
+        const cancelBtn = modal.querySelector('#tvCancelBtn');
+        const okBtn = modal.querySelector('#tvOkBtn');
+
+        const closeModal = () => { modal.style.display = 'none'; };
+
+        closeBtn.addEventListener('click', closeModal);
+        cancelBtn.addEventListener('click', closeModal);
         window.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
 
-        // OK Button: Apply Settings to Lightweight Charts Live
-        modal.querySelector('#tvOkSettings').addEventListener('click', () => {
-            if (window.chart && window.candlestickSeries) {
-                // Colors & Candles
-                const upColor = modal.querySelector('#tvUpColor').value;
-                const downColor = modal.querySelector('#tvDownColor').value;
-                const borderUp = modal.querySelector('#tvBorderUpColor').value;
-                const borderDown = modal.querySelector('#tvBorderDownColor').value;
-                const wickUp = modal.querySelector('#tvWickUpColor').value;
-                const wickDown = modal.querySelector('#tvWickDownColor').value;
-                const bgColor = modal.querySelector('#tvBgColor').value;
-                
-                const gridVert = modal.querySelector('#tvGridVert').checked;
-                const gridHorz = modal.querySelector('#tvGridHorz').checked;
+        // Apply Settings on OK click
+        okBtn.addEventListener('click', () => {
+            this.applySettingsToChart();
+            closeModal();
+        });
+    }
 
-                // Apply to Series
-                window.candlestickSeries.applyOptions({
-                    upColor: upColor,
-                    downColor: downColor,
-                    borderUpColor: borderUp,
-                    borderDownColor: borderDown,
-                    wickUpColor: wickUp,
-                    wickDownColor: wickDown,
-                });
+    applySettingsToChart() {
+        if (!window.chart || !window.candlestickSeries) return;
 
-                // Apply to Chart Layout & Grid
-                window.chart.applyOptions({
-                    layout: {
-                        background: { type: 'solid', color: bgColor }
-                    },
-                    grid: {
-                        vertLines: { visible: gridVert },
-                        horzLines: { visible: gridHorz }
-                    }
-                });
+        // Read UI inputs and apply to Lightweight Charts instance
+        const upBody = document.getElementById('tvUpBodyColor').value;
+        const downBody = document.getElementById('tvDownBodyColor').value;
+        const upWick = document.getElementById('tvUpWickColor').value;
+        const downWick = document.getElementById('tvDownWickColor').value;
+        const bgColor = document.getElementById('tvBgColor').value;
+        const vertGrid = document.getElementById('tvVertGridToggle').checked;
+        const horzGrid = document.getElementById('tvHorzGridToggle').checked;
+
+        window.candlestickSeries.applyOptions({
+            upColor: upBody,
+            downColor: downBody,
+            wickUpColor: upWick,
+            wickDownColor: downWick,
+        });
+
+        window.chart.applyOptions({
+            layout: {
+                background: { type: 'solid', color: bgColor }
+            },
+            grid: {
+                vertLines: { visible: vertGrid },
+                horzLines: { visible: horzGrid }
             }
-
-            modal.style.display = 'none';
         });
     }
 
@@ -242,5 +242,7 @@ class ChartSettingsModal {
     }
 }
 
-// Initialize and link globally
-window.chartSettingsModal = new ChartSettingsModal();
+// Initialize and attach to global scope
+document.addEventListener('DOMContentLoaded', () => {
+    window.chartSettingsModal = new ChartSettingsModal();
+});

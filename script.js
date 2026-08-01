@@ -1,4 +1,4 @@
-// --- Nexus Trading Platform - Script.js (Instant Symbol Switch & Master Settings Integration) ---
+// --- Nexus Trading Platform - Script.js (Instant Symbol Switch & TradingView Settings Integration) ---
 
 let chart;
 let candlestickSeries;
@@ -174,12 +174,8 @@ function setupEventListeners() {
         });
     }
 
-    // Master Settings Modal & Top Navigation "Settings" Tab Integration
+    // TradingView Settings Modal & Top Navigation "Settings" Tab Integration
     const navTabs = document.querySelectorAll('.tab-btn');
-    const masterModal = document.getElementById('masterSettingsModal');
-    const closeMasterBtn = document.getElementById('closeMasterSettings');
-    const saveMasterBtn = document.getElementById('saveMasterSettingsBtn');
-
     navTabs.forEach(tab => {
         tab.addEventListener('click', (e) => {
             const tabName = e.target.getAttribute('data-tab');
@@ -187,48 +183,13 @@ function setupEventListeners() {
             navTabs.forEach(t => t.classList.remove('active'));
             e.target.classList.add('active');
 
-            if (tabName === 'settings' && masterModal) {
-                masterModal.style.display = 'flex';
+            if (tabName === 'settings') {
+                if (window.chartSettingsModal) {
+                    window.chartSettingsModal.show();
+                }
             }
         });
     });
-
-    if (closeMasterBtn && masterModal) {
-        closeMasterBtn.addEventListener('click', () => {
-            masterModal.style.display = 'none';
-        });
-    }
-
-    window.addEventListener('click', (e) => {
-        if (e.target === masterModal) {
-            masterModal.style.display = 'none';
-        }
-    });
-
-    if (saveMasterBtn && chart) {
-        saveMasterBtn.addEventListener('click', () => {
-            const gridToggle = document.getElementById('masterGridToggle').checked;
-            chart.applyOptions({
-                grid: {
-                    vertLines: { visible: gridToggle, color: '#1f293d' },
-                    horzLines: { visible: gridToggle, color: '#1f293d' }
-                }
-            });
-
-            const whaleToggle = document.getElementById('masterWhaleToggle').checked;
-            const volumeProfileToggle = document.getElementById('masterVolumeProfileToggle').checked;
-            const absorptionToggle = document.getElementById('masterAbsorptionToggle').checked;
-            const footprintToggle = document.getElementById('masterFootprintToggle').checked;
-
-            if (window.whaleBubbleModule) window.whaleBubbleModule.setVisibility(whaleToggle);
-            if (window.volumeProfileModule) window.volumeProfileModule.setVisibility(volumeProfileToggle);
-            if (window.absorptionModule) window.absorptionModule.setVisibility(absorptionToggle);
-            if (window.nexusFootprint) window.nexusFootprint.setVisibility(footprintToggle);
-
-            masterModal.style.display = 'none';
-            alert('All settings saved successfully!');
-        });
-    }
 }
 
 // 3. Reset and Reload Chart Safely
