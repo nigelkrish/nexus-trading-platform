@@ -1,4 +1,4 @@
-// --- Nexus Trading Platform - Advanced Drawing Manager (TradingView Style Parallel Channel) ---
+// --- Nexus Trading Platform - Advanced Drawing Manager (TradingView Style Double Click Edit) ---
 
 class TrendToolsModule {
     constructor() {
@@ -91,12 +91,12 @@ class TrendToolsModule {
         }
         else if (item.subType === 'parallelchannel') {
             if (item.yOffset === undefined) item.yOffset = 60;
-            if (item.x3 === undefined) item.x3 = item.x2 + (item.x1 ? 0 : 100); // Support for parallel shift
-            if (item.y3 === undefined) item.y3 = item.y2 + item.yOffset;
+            if (item.x3 === undefined) item.x3 = item.x2 + (item.x1 ? 0 : 100);
 
-            // Vector calculations for true parallel channel support
-            const dx = item.x2 - item.x1;
-            const dy = item.y2 - item.y1;
+            const bX1 = item.x1 + (item.channelShiftX || 0);
+            const bY1 = item.y1 + item.yOffset;
+            const bX2 = item.x2 + (item.channelShiftX || 0);
+            const bY2 = item.y2 + item.yOffset;
             
             // Top Line
             ctx.beginPath();
@@ -104,12 +104,7 @@ class TrendToolsModule {
             ctx.lineTo(item.x2, item.y2);
             ctx.stroke();
 
-            // Bottom Line (derived via offset vector x3, y3 relative)
-            const bX1 = item.x1 + (item.channelShiftX || 0);
-            const bY1 = item.y1 + item.yOffset;
-            const bX2 = item.x2 + (item.channelShiftX || 0);
-            const bY2 = item.y2 + item.yOffset;
-
+            // Bottom Line
             ctx.beginPath();
             ctx.moveTo(bX1, bY1);
             ctx.lineTo(bX2, bY2);
@@ -125,7 +120,7 @@ class TrendToolsModule {
             ctx.stroke();
             ctx.restore();
 
-            // Channel Background Fill
+            // Background Fill
             ctx.fillStyle = 'rgba(38, 166, 154, 0.06)';
             ctx.beginPath();
             ctx.moveTo(item.x1, item.y1);
@@ -193,7 +188,6 @@ class TrendToolsModule {
                 drawHandle(item.x2, item.y2, false);
                 drawHandle(bX1, bY1, false);
                 drawHandle(bX2, bY2, false);
-                // Center control handles for width/length
                 drawHandle((item.x1 + item.x2) / 2, (item.y1 + item.y2) / 2, true);
                 drawHandle((bX1 + bX2) / 2, (bY1 + bY2) / 2, true);
             } else {
@@ -375,6 +369,42 @@ class NexusDrawingManager {
         let currentDrawObj = null;
         let dragStartX = 0, dragStartY = 0;
 
+        // Double Click Event for TradingView-style Settings/Editing
+        canvas.ondblclick = (e) => {
+            if (!this.isVisible || this.isLocked) return;
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            for (let item of this.drawings) {
+                let hit = false;
+                if (item.subType === 'parallelchannel') {
+                    if (item.yOffset === undefined) item.yOffset = 60;
+                    const bX1 = item.x1 + (item.channelShiftX || 0);
+                    const bY1 = item.y1 + item.yOffset;
+                    const bX2 = item.x2 + (item.channelShiftX || 0);
+                    const bY2 = item.y2 + item.yOffset;
+                    if (Math.hypot(mouseX - item.x1, mouseY - item.y1) < 15 || 
+                        Math.hypot(mouseX - item.x2, mouseY - item.y2) < 15 ||
+                        Math.hypot(mouseX - bX1, mouseY - bY1) < 15 ||
+                        Math.hypot(mouseX - bX2, mouseY - bY2) < 15 ||
+                        this.pDistance(mouseX, mouseY, item.x1, item.y1, item.x2, item.y2) < 12) {
+                        hit = true;
+                    }
+                } else if (this.pDistance(mouseX, mouseY, item.x1, item.y1, item.x2, item.y2) < 12) {
+                    hit = true;
+                }
+
+                if (hit) {
+                    this.selectedDrawing = item;
+                    this.showFloatingToolbar(item);
+                    this.redrawCanvas();
+                    this.showSettingsModal(item, e.clientX, e.clientY);
+                    break;
+                }
+            }
+        };
+
         canvas.onmousedown = (e) => {
             if (!this.isVisible || this.isLocked) return;
             const rect = canvas.getBoundingClientRect();
@@ -521,15 +551,12 @@ class NexusDrawingManager {
                     this.selectedDrawing.x2 = mouseX;
                     this.selectedDrawing.y2 = mouseY;
                 } else if (this.draggingHandle === 'pc_p1') {
-                    // Adjust starting point of top line (changes length & angle)
                     this.selectedDrawing.x1 = mouseX;
                     this.selectedDrawing.y1 = mouseY;
                 } else if (this.draggingHandle === 'pc_p2') {
-                    // Adjust ending point of top line (changes length & angle)
                     this.selectedDrawing.x2 = mouseX;
                     this.selectedDrawing.y2 = mouseY;
                 } else if (this.draggingHandle === 'pc_p3' || this.draggingHandle === 'pc_p4') {
-                    // Adjust channel width & shift
                     this.selectedDrawing.yOffset = mouseY - this.selectedDrawing.y1;
                     this.selectedDrawing.channelShiftX = mouseX - this.selectedDrawing.x1;
                 } else if (this.draggingHandle === 'move') {
