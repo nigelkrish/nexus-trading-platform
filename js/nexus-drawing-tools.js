@@ -1,25 +1,124 @@
-// --- Nexus Trading Platform - Main Drawing Manager & Toolbar ---
+// --- Nexus Trading Platform - Main Drawing Manager & Toolbar (All-in-One Live Ready) ---
 
-// අනාගතයේදී සාදන වෙනම Tool Modules මෙහි ඉහළින් Import කරනු ලැබේ
-// උදාහරණයක් ලෙස: import { TrendlineTool } from './tools/trendline.js';
-// import { FibTool } from './tools/fibonacci.js';
+class TrendToolsModule {
+    constructor() {
+        this.subTools = [
+            { id: 'trendline', name: 'Trend Line', icon: '📈' },
+            { id: 'ray', name: 'Ray', icon: '↗️' },
+            { id: 'infoline', name: 'Info Line', icon: 'ℹ️' },
+            { id: 'extendedline', name: 'Extended Line', icon: '⟷' },
+            { id: 'horizline', name: 'Horizontal Line', icon: '➖' },
+            { id: 'vertline', name: 'Vertical Line', icon: '⏐' },
+            { id: 'parallelchannel', name: 'Parallel Channel', icon: '📊' }
+        ];
+    }
 
-import { TrendToolsModule } from './tools/trend-tools.js';
+    showSubMenu(parentButton, onSelectCallback) {
+        let existingMenu = document.getElementById('nexusTrendSubMenu');
+        if (existingMenu) {
+            existingMenu.remove();
+            return;
+        }
+
+        const menu = document.createElement('div');
+        menu.id = 'nexusTrendSubMenu';
+        menu.style.cssText = `
+            position: absolute; left: 45px; top: ${parentButton.offsetTop}px; z-index: 50;
+            background: #1e222d; border: 1px solid #363c4e; border-radius: 6px;
+            display: flex; flex-direction: column; gap: 2px; padding: 4px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5); width: 160px; user-select: none;
+        `;
+
+        this.subTools.forEach(tool => {
+            const item = document.createElement('div');
+            item.innerHTML = `<span style="margin-right:8px;">${tool.icon}</span> ${tool.name}`;
+            item.style.cssText = `
+                padding: 6px 10px; font-size: 12px; color: #d1d4dc; cursor: pointer;
+                border-radius: 4px; display: flex; align-items: center; transition: background 0.2s;
+            `;
+            item.onmouseover = () => item.style.background = '#2a2e39';
+            item.onmouseout = () => item.style.background = 'transparent';
+            
+            item.onclick = (e) => {
+                e.stopPropagation();
+                onSelectCallback(tool.id, tool.icon);
+                menu.remove();
+            };
+            menu.appendChild(item);
+        });
+
+        parentButton.parentElement.appendChild(menu);
+
+        document.addEventListener('click', function closeMenu(e) {
+            if (!menu.contains(e.target)) {
+                menu.remove();
+                document.removeEventListener('click', closeMenu);
+            }
+        });
+    }
+
+    draw(ctx, item) {
+        ctx.strokeStyle = item.color || '#26a69a';
+        ctx.fillStyle = item.color || '#26a69a';
+        ctx.lineWidth = item.width || 2;
+
+        if (item.subType === 'trendline') {
+            ctx.beginPath();
+            ctx.moveTo(item.x1, item.y1);
+            ctx.lineTo(item.x2, item.y2);
+            ctx.stroke();
+        } 
+        else if (item.subType === 'ray') {
+            const angle = Math.atan2(item.y2 - item.y1, item.x2 - item.x1);
+            const extendedX = item.x1 + Math.cos(angle) * 3000;
+            const extendedY = item.y1 + Math.sin(angle) * 3000;
+            ctx.beginPath();
+            ctx.moveTo(item.x1, item.y1);
+            ctx.lineTo(extendedX, extendedY);
+            ctx.stroke();
+        } 
+        else if (item.subType === 'horizline') {
+            ctx.beginPath();
+            ctx.moveTo(0, item.y1);
+            ctx.lineTo(ctx.canvas.width, item.y1);
+            ctx.stroke();
+        } 
+        else if (item.subType === 'vertline') {
+            ctx.beginPath();
+            ctx.moveTo(item.x1, 0);
+            ctx.lineTo(item.x1, ctx.canvas.height);
+            ctx.stroke();
+        }
+        else if (item.subType === 'parallelchannel') {
+            let heightOffset = (item.y2 - item.y1) / 2;
+            ctx.beginPath();
+            ctx.moveTo(item.x1, item.y1);
+            ctx.lineTo(item.x2, item.y2);
+            ctx.moveTo(item.x1, item.y1 + heightOffset);
+            ctx.lineTo(item.x2, item.y2 + heightOffset);
+            ctx.stroke();
+            ctx.fillStyle = 'rgba(38, 166, 154, 0.08)';
+            ctx.fillRect(Math.min(item.x1, item.x2), Math.min(item.y1, item.y1 + heightOffset), Math.abs(item.x2 - item.x1), Math.abs(heightOffset));
+        }
+    }
+}
 
 class NexusDrawingManager {
     constructor() {
         this.activeTool = 'cursor';
+        this.activeSubTool = 'trendline';
         this.isMagnetActive = false;
         this.isLocked = false;
         this.isVisible = true;
         this.drawings = [];
         
+        this.trendModule = new TrendToolsModule();
+
         this.initContainer();
         this.initToolbar();
         this.setupCanvasLayer();
     }
 
-    // 1. Chart Container එක පරීක්ෂා කර සකස් කිරීම
     initContainer() {
         this.container = document.getElementById('chartContainer');
         if (!this.container) {
@@ -31,7 +130,6 @@ class NexusDrawingManager {
         }
     }
 
-    // 2. Toolbar එක සහ Icons පමණක් නිර්මාණය කිරීම
     initToolbar() {
         if (!this.container) return;
 
@@ -40,7 +138,7 @@ class NexusDrawingManager {
             toolbar = document.createElement('div');
             toolbar.id = 'nexusDrawingToolbar';
             toolbar.style.cssText = `
-                position: absolute; left: 10px; top: 60px; z-index: 35;
+                position: absolute; left: 10px; top: 60px; z-index: 9999;
                 background: #1e222d; border: 1px solid #363c4e; border-radius: 6px;
                 display: flex; flex-direction: column; gap: 4px; padding: 6px;
                 box-shadow: 0 4px 12px rgba(0,0,0,0.4); user-select: none;
@@ -50,10 +148,9 @@ class NexusDrawingManager {
 
         toolbar.innerHTML = '';
 
-        // මෙහි Toolbar එකට අදාළ Icons සහ Tools ලැයිස්තුව පමණක් අඩංගු වේ
         const tools = [
             { id: 'cursor', icon: '➕', title: 'Cursor / Select' },
-            { id: 'trendline', icon: '📈', title: 'Trend Line' },
+            { id: 'trendline', icon: '📈', title: 'Trend Line Tools', hasSubMenu: true },
             { id: 'fib', icon: '📊', title: 'Fibonacci Retracement' },
             { id: 'brush', icon: '🖌️', title: 'Brush / Freehand' },
             { id: 'text', icon: 'T', title: 'Text Note' },
@@ -76,7 +173,7 @@ class NexusDrawingManager {
 
             const btn = document.createElement('button');
             btn.id = `tool_${item.id}`;
-            btn.innerHTML = item.icon;
+            btn.innerHTML = item.icon + (item.hasSubMenu ? ' <span style="font-size:8px;">▼</span>' : '');
             btn.title = item.title;
             btn.style.cssText = `
                 background: ${this.activeTool === item.id ? '#26a69a' : 'transparent'};
@@ -87,13 +184,18 @@ class NexusDrawingManager {
 
             btn.onclick = (e) => {
                 e.stopPropagation();
+                if (item.hasSubMenu) {
+                    this.trendModule.showSubMenu(btn, (selectedId, selectedIcon) => {
+                        this.activeSubTool = selectedId;
+                        btn.innerHTML = selectedIcon + ' <span style="font-size:8px;">▼</span>';
+                    });
+                }
                 this.handleToolClick(item.id, btn);
             };
             toolbar.appendChild(btn);
         });
     }
 
-    // 3. Tool එකක් ක්ලික් කළ විට ක්‍රියාත්මක වන ප්‍රධාන පාලකය (Router)
     handleToolClick(toolId, btnElement) {
         if (toolId === 'clear') {
             if (confirm('සියලුම Drawings ඉවත් කිරීමට අවශ්‍යද?')) {
@@ -108,7 +210,6 @@ class NexusDrawingManager {
             return;
         }
 
-        // අනෙකුත් ඇඳීමේ ටූල්ස් (Trendline, Fib ආදී වශයෙන්) තෝරාගැනීම
         document.querySelectorAll('#nexusDrawingToolbar button').forEach(b => {
             if (!['tool_magnet', 'tool_lock', 'tool_hide', 'tool_clear'].includes(b.id)) {
                 b.style.background = 'transparent';
@@ -119,8 +220,6 @@ class NexusDrawingManager {
         this.activeTool = toolId;
         btnElement.style.background = '#26a69a';
         btnElement.style.color = '#ffffff';
-
-        // අදාළ මොඩියුලය වෙත ඊළඟ විධානය ලබා දීම මෙතැනින් සිදු කළ හැක.
     }
 
     handleToggleTools(toolId, btnElement) {
@@ -139,7 +238,6 @@ class NexusDrawingManager {
         }
     }
 
-    // 4. Canvas ස්ථරය සැකසීම
     setupCanvasLayer() {
         if (!this.container) return;
 
@@ -147,11 +245,41 @@ class NexusDrawingManager {
         if (!canvas) {
             canvas = document.createElement('canvas');
             canvas.id = 'nexusDrawingCanvas';
-            canvas.style.cssText = 'position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 22;';
+            canvas.style.cssText = 'position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: auto; z-index: 22;';
             canvas.width = this.container.clientWidth;
             canvas.height = this.container.clientHeight;
             this.container.appendChild(canvas);
         }
+
+        let isDrawing = false;
+        let startX = 0, startY = 0;
+
+        canvas.onmousedown = (e) => {
+            if (!this.isVisible || this.isLocked || this.activeTool === 'cursor') return;
+            isDrawing = true;
+            const rect = canvas.getBoundingClientRect();
+            startX = e.clientX - rect.left;
+            startY = e.clientY - rect.top;
+        };
+
+        canvas.onmouseup = (e) => {
+            if (!isDrawing) return;
+            isDrawing = false;
+            const rect = canvas.getBoundingClientRect();
+            const endX = e.clientX - rect.left;
+            const endY = e.clientY - rect.top;
+
+            if (this.activeTool === 'trendline') {
+                this.drawings.push({
+                    type: 'trend',
+                    subType: this.activeSubTool,
+                    x1: startX, y1: startY,
+                    x2: endX, y2: endY,
+                    color: '#26a69a', width: 2
+                });
+                this.redrawCanvas();
+            }
+        };
 
         window.addEventListener('resize', () => {
             if (this.container) {
@@ -168,11 +296,15 @@ class NexusDrawingManager {
         const ctx = canvas.getContext('2d');
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
-        // අදාළ මොඩියුල හරහා drawings render කිරීම මෙහි සිදු වේ
+        this.drawings.forEach(item => {
+            if (item.type === 'trend') {
+                this.trendModule.draw(ctx, item);
+            }
+        });
     }
 }
 
-// ආරම්භ කිරීම
+// ආරම්භ කිරීම (මෙයට කිසිදු type="module" හෝ ඉම්පෝර්ට් අවශ්‍ය නොවේ)
 window.addEventListener('DOMContentLoaded', () => {
     window.nexusDrawingManager = new NexusDrawingManager();
 });
