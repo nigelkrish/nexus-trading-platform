@@ -43,8 +43,12 @@ class ChartSettingsModal {
             });
         });
 
-        // 3. Close / Cancel / OK buttons (Multiple selectors handled for safety)
-        const closeBtn = modal.querySelector('#closeChartSettings') || modal.querySelector('.close-btn') || modal.querySelector('.tv-close-btn');
+        // 3. Close / Cancel / OK buttons (Catching all possible selectors for the close button)
+        const closeBtn = modal.querySelector('#closeChartSettings') || 
+                         modal.querySelector('.close-btn') || 
+                         modal.querySelector('.tv-close-btn') || 
+                         modal.querySelector('.tv-modal-header button');
+                         
         const cancelBtn = modal.querySelector('#tvCancelBtn');
         const okBtn = modal.querySelector('#tvOkBtn');
 
