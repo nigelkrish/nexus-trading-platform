@@ -1,17 +1,24 @@
+// --- Nexus Trading Platform - Main Drawing Manager & Toolbar ---
+
 import { TrendToolsModule } from './tools/trend-tools.js';
 
 class NexusDrawingManager {
     constructor() {
         this.activeTool = 'trendline';
-        this.activeSubTool = 'trendline'; // Default sub-tool
+        this.activeSubTool = 'trendline'; // Default trend sub-tool
+        this.isMagnetActive = false;
+        this.isLocked = false;
+        this.isVisible = true;
         this.drawings = [];
-        this.trendModule = new TrendToolsModule();
         
+        this.trendModule = new TrendToolsModule();
+
         this.initContainer();
         this.initToolbar();
         this.setupCanvasLayer();
     }
 
+    // 1. Chart Container එක පරීක්ෂා කර සකස් කිරීම
     initContainer() {
         this.container = document.getElementById('chartContainer');
         if (!this.container) {
@@ -23,6 +30,7 @@ class NexusDrawingManager {
         }
     }
 
+    // 2. Toolbar එක සහ Icons නිර්මාණය කිරීම (TradingView මෝස්තරයට අනුව Trend sub-menu එක සමඟ)
     initToolbar() {
         if (!this.container) return;
 
@@ -41,14 +49,19 @@ class NexusDrawingManager {
 
         toolbar.innerHTML = '';
 
-        // TradingView මෝස්තරයට අනුව Trend Tool ප්‍රධාන අයිකනය
         const tools = [
-            { id: 'trendline', icon: '📈', title: 'Trend Tools (Ray, Channel, etc.)', hasSubMenu: true },
+            { id: 'cursor', icon: '➕', title: 'Cursor / Select' },
+            { id: 'trendline', icon: '📈', title: 'Trend Line Tools', hasSubMenu: true },
             { id: 'fib', icon: '📊', title: 'Fibonacci Retracement' },
-            { id: 'brush', icon: '🖌️', title: 'Brush' },
+            { id: 'brush', icon: '🖌️', title: 'Brush / Freehand' },
             { id: 'text', icon: 'T', title: 'Text Note' },
+            { id: 'measure', icon: '📏', title: 'Measure Range' },
             { type: 'separator' },
-            { id: 'clear', icon: '🗑️', title: 'Clear All' }
+            { id: 'magnet', icon: '🧲', title: 'Magnet Mode', toggle: true },
+            { id: 'lock', icon: '🔓', title: 'Lock All Drawings', toggle: true },
+            { id: 'hide', icon: '👁️', title: 'Hide / Show Drawings', toggle: true },
+            { type: 'separator' },
+            { id: 'clear', icon: '🗑️', title: 'Clear All Drawings' }
         ];
 
         tools.forEach(item => {
@@ -61,7 +74,7 @@ class NexusDrawingManager {
 
             const btn = document.createElement('button');
             btn.id = `tool_${item.id}`;
-            btn.innerHTML = item.icon + (item.hasSubMenu ? ' <span style="font-size:9px;">▼</span>' : '');
+            btn.innerHTML = item.icon + (item.hasSubMenu ? ' <span style="font-size:8px;">▼</span>' : '');
             btn.title = item.title;
             btn.style.cssText = `
                 background: ${this.activeTool === item.id ? '#26a69a' : 'transparent'};
@@ -73,9 +86,9 @@ class NexusDrawingManager {
             btn.onclick = (e) => {
                 e.stopPropagation();
                 if (item.hasSubMenu) {
-                    this.trendModule.showSubMenu(btn, (selectedSubTool) => {
-                        this.activeSubTool = selectedSubTool;
-                        btn.innerHTML = (selectedSubTool === 'ray' ? '↗️' : selectedSubTool === 'horizline' ? '➖' : '📈') + ' <span style="font-size:9px;">▼</span>';
+                    this.trendModule.showSubMenu(btn, (selectedId, selectedIcon) => {
+                        this.activeSubTool = selectedId;
+                        btn.innerHTML = selectedIcon + ' <span style="font-size:8px;">▼</span>';
                     });
                 }
                 this.handleToolClick(item.id, btn);
@@ -84,18 +97,53 @@ class NexusDrawingManager {
         });
     }
 
+    // 3. Tool එකක් ක්ලික් කළ විට ක්‍රියාත්මක වන ප්‍රධාන පාලකය (Router)
     handleToolClick(toolId, btnElement) {
         if (toolId === 'clear') {
-            this.drawings = [];
-            this.redrawCanvas();
+            if (confirm('සියලුම Drawings ඉවත් කිරීමට අවශ්‍යද?')) {
+                this.drawings = [];
+                this.redrawCanvas();
+            }
             return;
         }
-        document.querySelectorAll('#nexusDrawingToolbar button').forEach(b => b.style.background = 'transparent');
+
+        if (toolId === 'magnet' || toolId === 'lock' || toolId === 'hide') {
+            this.handleToggleTools(toolId, btnElement);
+            return;
+        }
+
+        document.querySelectorAll('#nexusDrawingToolbar button').forEach(b => {
+            if (!['tool_magnet', 'tool_lock', 'tool_hide', 'tool_clear'].includes(b.id)) {
+                b.style.background = 'transparent';
+                b.style.color = '#d1d4dc';
+            }
+        });
+
         this.activeTool = toolId;
         btnElement.style.background = '#26a69a';
+        btnElement.style.color = '#ffffff';
     }
 
+    handleToggleTools(toolId, btnElement) {
+        if (toolId === 'magnet') {
+            this.isMagnetActive = !this.isMagnetActive;
+            btnElement.style.background = this.isMagnetActive ? '#26a69a' : 'transparent';
+        } else if (toolId === 'lock') {
+            this.isLocked = !this.isLocked;
+            btnElement.innerHTML = this.isLocked ? '🔒' : '🔓';
+            btnElement.style.background = this.isLocked ? '#26a69a' : 'transparent';
+        } else if (toolId === 'hide') {
+            this.isVisible = !this.isVisible;
+            btnElement.style.background = !this.isVisible ? '#ef5350' : 'transparent';
+            const canvas = document.getElementById('nexusDrawingCanvas');
+            if (canvas) canvas.style.display = this.isVisible ? 'block' : 'none';
+        }
+    }
+
+    // 4. Canvas ස්ථරය සැකසීම සහ ඇඳීමේ ඉතිහාසය හැසිරවීම
     setupCanvasLayer() {
+        if (!this.container) return;
+
         let canvas = document.getElementById('nexusDrawingCanvas');
         if (!canvas) {
             canvas = document.createElement('canvas');
@@ -110,6 +158,7 @@ class NexusDrawingManager {
         let startX = 0, startY = 0;
 
         canvas.onmousedown = (e) => {
+            if (!this.isVisible || this.isLocked) return;
             isDrawing = true;
             const rect = canvas.getBoundingClientRect();
             startX = e.clientX - rect.left;
@@ -134,6 +183,14 @@ class NexusDrawingManager {
                 this.redrawCanvas();
             }
         };
+
+        window.addEventListener('resize', () => {
+            if (this.container) {
+                canvas.width = this.container.clientWidth;
+                canvas.height = this.container.clientHeight;
+                this.redrawCanvas();
+            }
+        });
     }
 
     redrawCanvas() {
@@ -141,7 +198,8 @@ class NexusDrawingManager {
         if (!canvas) return;
         const ctx = canvas.getContext('2d');
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-
+        
+        // මොඩියුල හරහා අදාළ drawings render කිරීම
         this.drawings.forEach(item => {
             if (item.type === 'trend') {
                 this.trendModule.draw(ctx, item);
@@ -150,6 +208,7 @@ class NexusDrawingManager {
     }
 }
 
+// ආරම්භ කිරීම
 window.addEventListener('DOMContentLoaded', () => {
     window.nexusDrawingManager = new NexusDrawingManager();
 });

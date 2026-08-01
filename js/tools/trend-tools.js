@@ -1,3 +1,5 @@
+// --- Nexus Trading Platform - Trend Tools Module ---
+
 export class TrendToolsModule {
     constructor() {
         this.subTools = [
@@ -11,7 +13,7 @@ export class TrendToolsModule {
         ];
     }
 
-    // Trend Sub-menu එක Toolbar එක අසල පෙන්වීම
+    // TradingView මෝස්තරයේ සබ්-මෙනුව පෙන්වීම
     showSubMenu(parentButton, onSelectCallback) {
         let existingMenu = document.getElementById('nexusTrendSubMenu');
         if (existingMenu) {
@@ -40,7 +42,7 @@ export class TrendToolsModule {
             
             item.onclick = (e) => {
                 e.stopPropagation();
-                onSelectCallback(tool.id);
+                onSelectCallback(tool.id, tool.icon);
                 menu.remove();
             };
             menu.appendChild(item);
@@ -48,7 +50,6 @@ export class TrendToolsModule {
 
         parentButton.parentElement.appendChild(menu);
 
-        // වෙනත් තැනක ක්ලික් කළහොත් මෙනුව වැසීම
         document.addEventListener('click', function closeMenu(e) {
             if (!menu.contains(e.target)) {
                 menu.remove();
@@ -57,7 +58,7 @@ export class TrendToolsModule {
         });
     }
 
-    // Canvas එක මත අදාළ Trend Tool එකට අනුව ඇඳීම සිදු කිරීම
+    // Canvas එක මත එකිනෙකට වෙනස් Trend Tools ඇඳීම
     draw(ctx, item) {
         ctx.strokeStyle = item.color || '#26a69a';
         ctx.fillStyle = item.color || '#26a69a';
@@ -70,10 +71,9 @@ export class TrendToolsModule {
             ctx.stroke();
         } 
         else if (item.subType === 'ray') {
-            // Ray: එක පැත්තකට පමණක් අනන්තයට දිගු වේ
             const angle = Math.atan2(item.y2 - item.y1, item.x2 - item.x1);
-            const extendedX = item.x1 + Math.cos(angle) * 2000;
-            const extendedY = item.y1 + Math.sin(angle) * 2000;
+            const extendedX = item.x1 + Math.cos(angle) * 3000;
+            const extendedY = item.y1 + Math.sin(angle) * 3000;
             ctx.beginPath();
             ctx.moveTo(item.x1, item.y1);
             ctx.lineTo(extendedX, extendedY);
@@ -92,7 +92,7 @@ export class TrendToolsModule {
             ctx.stroke();
         }
         else if (item.subType === 'parallelchannel') {
-            let heightOffset = (item.y2 - item.y1) / 2; // සරල Parallel පරතරය
+            let heightOffset = (item.y2 - item.y1) / 2;
             ctx.beginPath();
             ctx.moveTo(item.x1, item.y1);
             ctx.lineTo(item.x2, item.y2);
