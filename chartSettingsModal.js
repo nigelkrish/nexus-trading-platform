@@ -8,6 +8,12 @@ class ChartSettingsModal {
 
     init() {
         this.modalElement = document.getElementById('tradingViewSettingsModal');
+        
+        // CRITICAL FIX: Ensure modal is strictly hidden on initial page load
+        if (this.modalElement) {
+            this.modalElement.style.display = 'none';
+        }
+
         this.attachEventListeners();
     }
 
@@ -15,7 +21,7 @@ class ChartSettingsModal {
         const modal = this.modalElement;
         if (!modal) return;
 
-        // 1. Open modal when clicking "Settings" in top navigation
+        // 1. Open modal ONLY when clicking "Settings" in top navigation
         const mainSettingsNavBtn = document.getElementById('mainSettingsNavBtn');
         if (mainSettingsNavBtn) {
             mainSettingsNavBtn.addEventListener('click', (e) => {
@@ -43,33 +49,36 @@ class ChartSettingsModal {
             });
         });
 
-        // 3. Universal Close / Cancel / OK listener using Event Delegation & Class/ID matching
+        // 3. Universal Close / Cancel / OK listener using Event Delegation
         const closeModal = () => { 
             modal.style.display = 'none'; 
         };
 
         modal.addEventListener('click', (e) => {
-            // Target any close button (using &times;, classes, or IDs)
-            if (
+            // Check if clicked element is a close button, cross icon, cancel, or ok
+            const isCloseAction = 
                 e.target.id === 'closeChartSettings' || 
                 e.target.classList.contains('close-btn') || 
                 e.target.classList.contains('tv-close-btn') ||
                 e.target.id === 'tvCancelBtn' ||
                 e.target.id === 'tvOkBtn' ||
-                e.target.textContent.trim() === '×'
-            ) {
+                e.target.textContent.trim() === '×' ||
+                e.target.closest('.tv-close-btn') ||
+                e.target.closest('#closeChartSettings');
+
+            if (isCloseAction) {
                 e.preventDefault();
-                if (e.target.id === 'tvOkBtn') {
+                if (e.target.id === 'tvOkBtn' || e.target.closest('#tvOkBtn')) {
                     this.applySettingsToChart();
                 }
                 closeModal();
             }
         });
 
-        // Close when clicking outside modal container
-        window.addEventListener('click', (e) => { 
+        // Close when clicking outside modal container (on the dark overlay background)
+        modal.addEventListener('click', (e) => {
             if (e.target === modal) {
-                closeModal(); 
+                closeModal();
             }
         });
     }
