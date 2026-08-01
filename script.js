@@ -184,16 +184,14 @@ function resetAndReload() {
     oldestTimestamp = null;
     hasMoreData = true;
     
-    // පරණ WebSocket කනෙක්ෂන් එක ආරක්ෂාකාරීව Close කිරීම
+    // පරණ WebSocket කනෙක්ෂන් එක සම්පූර්ණයෙන්ම පිරිසිදු කර ක්ලෝස් කිරීම
     if (ws) {
         try {
             ws.onopen = null;
             ws.onmessage = null;
             ws.onerror = null;
             ws.onclose = null;
-            if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
-                ws.close();
-            }
+            ws.close();
         } catch (e) {}
         ws = null;
     }
@@ -278,64 +276,69 @@ async function loadMoreHistoricalData() {
     }
 }
 
-// 5. WebSocket Realtime Ticks (Debounced & Safe Connection)
+// 5. WebSocket Realtime Ticks (Completely Safe Closing & Error Prevention)
 function connectWebSocket(symbol, timeframe) {
-    // 1. කලින් දමා ඇති ඩවුන්බවුන්ස් ටයිමර් එක ක්ලියර් කිරීම (අනවශ්‍ය කනෙක්ෂන් ඉල්ලීම් මඟහරියි)
     if (wsDebounceTimer) {
         clearTimeout(wsDebounceTimer);
         wsDebounceTimer = null;
     }
 
-    // 2. පවතින WebSocket එකක් ඇත්නම් එය වහාම క్ලෝස් කිරීම
     if (ws) {
         try {
             ws.onopen = null;
             ws.onmessage = null;
             ws.onerror = null;
             ws.onclose = null;
-            if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
-                ws.close();
-            }
+            ws.close();
         } catch (e) {}
         ws = null;
     }
     
     if (isReplayMode) return;
 
-    // 3. මිලිසෙකන්ඩ් 300ක ප්‍රමාදයක් (Debounce) දී අලුත් කනෙක්ෂන් එක ඕපන් කිරීම
     wsDebounceTimer = setTimeout(() => {
         if (isReplayMode) return;
 
         const wsUrl = `wss://stream.binance.com/ws/${symbol.toLowerCase()}@kline_${timeframe}`;
         
         try {
-            ws = new WebSocket(wsUrl);
+            const socket = new WebSocket(wsUrl);
+            ws = socket;
 
-            ws.onmessage = (event) => {
-                if (isReplayMode) return;
-                const message = JSON.parse(event.data);
-                if (message.k) {
-                    const kline = message.k;
-                    const candleData = {
-                        time: kline.t / 1000,
-                        open: parseFloat(kline.o),
-                        high: parseFloat(kline.h),
-                        low: parseFloat(kline.l),
-                        close: parseFloat(kline.c)
-                    };
+            socket.onmessage = (event) => {
+                // කනෙක්ෂන් එක මාරු වී ඇත්නම් හෝ රෙප්ලේ මෝඩ් එකේ නම් ඊවෙන්ට් එක ඉග්නෝර් කරන්න
+                if (isReplayMode || ws !== socket) return;
+                
+                try {
+                    const message = JSON.parse(event.data);
+                    if (message.k) {
+                        const kline = message.k;
+                        const candleData = {
+                            time: kline.t / 1000,
+                            open: parseFloat(kline.o),
+                            high: parseFloat(kline.h),
+                            low: parseFloat(kline.l),
+                            close: parseFloat(kline.c)
+                        };
 
-                    candlestickSeries.update(candleData);
-                    updatePriceDisplay(candleData.close, candleData.open);
+                        candlestickSeries.update(candleData);
+                        updatePriceDisplay(candleData.close, candleData.open);
 
-                    // Pass live price to Modular Alert System
-                    if (window.nexusAlerts) {
-                        window.nexusAlerts.checkAlerts(candleData.close, currentSymbol);
+                        if (window.nexusAlerts) {
+                            window.nexusAlerts.checkAlerts(candleData.close, currentSymbol);
+                        }
                     }
-                }
+                } catch (err) {}
             };
 
-            ws.onerror = (error) => {
-                // Silently handle
+            socket.onerror = (error) => {
+                // Prevent unhandled error logs in console
+            };
+
+            socket.onclose = () => {
+                if (ws === socket) {
+                    ws = null;
+                }
             };
         } catch (err) {
             console.error('WebSocket connection error:', err);
@@ -365,9 +368,7 @@ function activateReplayFromIndex(index) {
             ws.onmessage = null;
             ws.onerror = null;
             ws.onclose = null;
-            if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
-                ws.close();
-            }
+            ws.close();
         } catch (e) {}
         ws = null;
     }
