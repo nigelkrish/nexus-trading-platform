@@ -1,4 +1,4 @@
-// --- Nexus Trading Platform - Advanced Drawing Manager (TradingView Style: Left-Click Edit + Right-Click Settings Panel) ---
+// --- Nexus Trading Platform - Advanced Drawing Manager (Fixed Drawing & Selection Logic) ---
 
 class TrendToolsModule {
     constructor() {
@@ -139,7 +139,6 @@ class TrendToolsModule {
             drawHandle(item.x1, item.y1);
             drawHandle(item.x2, item.y2);
 
-            // Middle Text Box Indicator
             ctx.save();
             ctx.strokeStyle = '#2962ff';
             ctx.lineWidth = 1;
@@ -309,6 +308,7 @@ class NexusDrawingManager {
 
         let isDrawing = false;
         let startX = 0, startY = 0;
+        let currentDrawObj = null;
         let dragStartX = 0, dragStartY = 0;
 
         canvas.onmousedown = (e) => {
@@ -385,9 +385,20 @@ class NexusDrawingManager {
                     return;
                 }
 
+                // --- DRAWING CREATION INITIATION ---
                 isDrawing = true;
                 startX = mouseX;
                 startY = mouseY;
+                currentDrawObj = {
+                    id: Date.now(),
+                    type: this.activeTool,
+                    subType: this.activeTool === 'trendline' ? this.activeSubTool : this.activeTool,
+                    x1: startX, y1: startY,
+                    x2: startX, y2: startY,
+                    color: '#26a69a',
+                    width: 2,
+                    text: ''
+                };
             }
         };
 
@@ -397,6 +408,7 @@ class NexusDrawingManager {
             const mouseX = e.clientX - rect.left;
             const mouseY = e.clientY - rect.top;
 
+            // Handle moving existing selected shape or its endpoints
             if (this.draggingHandle && this.selectedDrawing) {
                 const dx = mouseX - dragStartX;
                 const dy = mouseY - dragStartY;
@@ -418,12 +430,49 @@ class NexusDrawingManager {
                 this.redrawCanvas();
                 return;
             }
+
+            // Real-time preview when dragging mouse to draw a new shape
+            if (isDrawing && currentDrawObj) {
+                currentDrawObj.x2 = mouseX;
+                currentDrawObj.y2 = mouseY;
+                this.redrawCanvas();
+                const ctx = canvas.getContext('2d');
+                this.trendModule.draw(ctx, currentDrawObj, false);
+            }
         };
 
-        canvas.onmouseup = () => {
+        canvas.onmouseup = (e) => {
             this.draggingHandle = null;
             if (!isDrawing) return;
             isDrawing = false;
+
+            if (currentDrawObj) {
+                const rect = canvas.getBoundingClientRect();
+                currentDrawObj.x2 = e.clientX - rect.left;
+                currentDrawObj.y2 = e.clientY - rect.top;
+
+                // Only save if it's not a mere click
+                if (Math.hypot(currentDrawObj.x2 - currentDrawObj.x1, currentDrawObj.y2 - currentDrawObj.y1) > 5) {
+                    this.drawings.push(currentDrawObj);
+                    this.selectedDrawing = currentDrawObj;
+                    this.showFloatingToolbar(currentDrawObj);
+                }
+
+                currentDrawObj = null;
+                this.activeTool = 'cursor';
+                
+                document.querySelectorAll('#nexusDrawingToolbar button').forEach(b => {
+                    b.style.background = 'transparent';
+                    b.style.color = '#d1d4dc';
+                });
+                const cursorBtn = document.getElementById('tool_cursor');
+                if (cursorBtn) {
+                    cursorBtn.style.background = '#26a69a';
+                    cursorBtn.style.color = '#ffffff';
+                }
+
+                this.redrawCanvas();
+            }
         };
 
         canvas.oncontextmenu = (e) => e.preventDefault();
@@ -580,7 +629,6 @@ class NexusDrawingManager {
             this.redrawCanvas();
         };
 
-        // Close modal when clicking outside
         setTimeout(() => {
             window.addEventListener('click', function closeMod(evt) {
                 if (!modal.contains(evt.target) && !evt.target.closest('#nexusFloatingBar')) {
