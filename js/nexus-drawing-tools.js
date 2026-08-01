@@ -396,15 +396,47 @@ class NexusDrawingToolbar {
                 ctx.lineTo(item.x2, item.y2);
                 ctx.stroke();
             } else if (item.type === 'fib') {
-                ctx.beginPath();
-                ctx.moveTo(item.x1, item.y1);
-                ctx.lineTo(item.x2, item.y2);
-                ctx.stroke();
-                [0, 0.236, 0.382, 0.5, 0.618, 0.65, 0.786, 1].forEach(lvl => {
-                    let lx = item.x1 + (item.x2 - item.x1) * lvl;
-                    let ly = item.y1 + (item.y2 - item.y1) * lvl;
-                    ctx.font = '10px sans-serif';
-                    ctx.fillText(`${lvl}`, lx + 6, ly);
+                const fibLevels = [
+                    { level: 0, label: '0' },
+                    { level: 0.236, label: '0.236' },
+                    { level: 0.382, label: '0.382' },
+                    { level: 0.5, label: '0.5' },
+                    { level: 0.618, label: '0.618' },
+                    { level: 0.65, label: '0.65' },
+                    { level: 0.786, label: '0.786' },
+                    { level: 1, label: '1' }
+                ];
+
+                // TradingView Style Fibonacci Shading / Background Fills අතරමැද වර්ණ ගැන්වීම
+                for (let i = 0; i < fibLevels.length - 1; i++) {
+                    let lvl1 = fibLevels[i].level;
+                    let lvl2 = fibLevels[i+1].level;
+
+                    let xA = item.x1 + (item.x2 - item.x1) * lvl1;
+                    let yA = item.y1 + (item.y2 - item.y1) * lvl1;
+                    let xB = item.x1 + (item.x2 - item.x1) * lvl2;
+                    let yB = item.y1 + (item.y2 - item.y1) * lvl2;
+
+                    ctx.fillStyle = i % 2 === 0 ? 'rgba(38, 166, 154, 0.05)' : 'rgba(41, 98, 255, 0.05)';
+                    ctx.fillRect(Math.min(item.x1, item.x2), Math.min(yA, yB), Math.abs(item.x2 - item.x1), Math.abs(yB - yA));
+                }
+
+                // Fib Lines සහ Labels ඇඳීම
+                fibLevels.forEach(fib => {
+                    let lx = item.x1 + (item.x2 - item.x1) * fib.level;
+                    let ly = item.y1 + (item.y2 - item.y1) * fib.level;
+
+                    ctx.beginPath();
+                    ctx.setLineDash([4, 4]); // TradingView style dashed line
+                    ctx.moveTo(item.x1, ly);
+                    ctx.lineTo(item.x2, ly);
+                    ctx.strokeStyle = item.color || '#26a69a';
+                    ctx.stroke();
+                    ctx.setLineDash([]); // Reset line dash
+
+                    ctx.font = '11px sans-serif';
+                    ctx.fillStyle = item.color || '#26a69a';
+                    ctx.fillText(`${fib.level} (${ly.toFixed(0)})`, Math.min(item.x1, item.x2) + 6, ly - 4);
                 });
             } else if (item.type === 'brush' && item.points) {
                 ctx.beginPath();
