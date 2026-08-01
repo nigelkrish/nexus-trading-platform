@@ -34,6 +34,9 @@ function initChart() {
     const container = document.getElementById('chartContainer');
     if (!container) return;
 
+    // localStorage වලින් කලින් සේව් කරගත් Session Breaks සැකසුම ලබා ගැනීම
+    const savedSessionBreaks = localStorage.getItem('nexus_session_breaks') === 'true';
+
     chart = LightweightCharts.createChart(container, {
         width: container.clientWidth,
         height: container.clientHeight,
@@ -42,7 +45,10 @@ function initChart() {
             textColor: '#d1d4dc',
         },
         grid: {
-            vertLines: { color: '#1f293d', visible: true },
+            vertLines: { 
+                color: savedSessionBreaks ? '#2a2e39' : '#1f293d', 
+                visible: true 
+            },
             horzLines: { color: '#1f293d', visible: true },
         },
         crosshair: {
@@ -56,6 +62,7 @@ function initChart() {
             borderColor: '#2a2e39',
             timeVisible: true,
             secondsVisible: false,
+            fixLeftEdge: true,
         },
     });
 
@@ -190,6 +197,37 @@ function setupEventListeners() {
                 }
             }
         });
+    });
+
+    // Session Breaks Checkbox Event Listener Integration
+    const sessionBreakCheckbox = document.getElementById('sessionBreakCheckbox');
+    if (sessionBreakCheckbox) {
+        // Initial load state sync
+        const savedState = localStorage.getItem('nexus_session_breaks') === 'true';
+        sessionBreakCheckbox.checked = savedState;
+
+        sessionBreakCheckbox.addEventListener('change', (e) => {
+            const isChecked = e.target.checked;
+            updateSessionBreaksSetting(isChecked);
+            localStorage.setItem('nexus_session_breaks', isChecked);
+        });
+    }
+}
+
+// Session Breaks Settings Handler Function
+function updateSessionBreaksSetting(showSessionBreaks) {
+    if (!chart) return;
+
+    chart.applyOptions({
+        grid: {
+            vertLines: { 
+                color: showSessionBreaks ? '#2a2e39' : '#1f293d', 
+                visible: true 
+            }
+        },
+        timeScale: {
+            timeVisible: true,
+        }
     });
 }
 
