@@ -19,8 +19,8 @@ let replayIndex = 0;
 let replayTimer = null;
 let isPlaying = false;
 
-// WebSocket Connection Lock State
-let isConnectingWs = false;
+// WebSocket Debounce Timer State
+let wsDebounceTimer = null;
 
 document.addEventListener('DOMContentLoaded', () => {
     window.currentSymbol = currentSymbol; // Sync initial global symbol
@@ -278,8 +278,15 @@ async function loadMoreHistoricalData() {
     }
 }
 
-// 5. WebSocket Realtime Ticks (Fixed, Port 9443 Removed & Lock-Protected)
+// 5. WebSocket Realtime Ticks (Debounced & Safe Connection)
 function connectWebSocket(symbol, timeframe) {
+    // 1. කලින් දමා ඇති ඩවුන්බවුන්ස් ටයිමර් එක ක්ලියර් කිරීම (අනවශ්‍ය කනෙක්ෂන් ඉල්ලීම් මඟහරියි)
+    if (wsDebounceTimer) {
+        clearTimeout(wsDebounceTimer);
+        wsDebounceTimer = null;
+    }
+
+    // 2. පවතින WebSocket එකක් ඇත්නම් එය වහාම క్ලෝස් කිරීම
     if (ws) {
         try {
             ws.onopen = null;
@@ -293,24 +300,16 @@ function connectWebSocket(symbol, timeframe) {
         ws = null;
     }
     
-    if (isReplayMode || isConnectingWs) return;
-    isConnectingWs = true;
+    if (isReplayMode) return;
 
-    setTimeout(() => {
-        if (isReplayMode) {
-            isConnectingWs = false;
-            return;
-        }
+    // 3. මිලිසෙකන්ඩ් 300ක ප්‍රමාදයක් (Debounce) දී අලුත් කනෙක්ෂන් එක ඕපන් කිරීම
+    wsDebounceTimer = setTimeout(() => {
+        if (isReplayMode) return;
 
-        // Standard port 443 URL (Fixes blank chart / blocked port issue)
         const wsUrl = `wss://stream.binance.com/ws/${symbol.toLowerCase()}@kline_${timeframe}`;
         
         try {
             ws = new WebSocket(wsUrl);
-
-            ws.onopen = () => {
-                isConnectingWs = false;
-            };
 
             ws.onmessage = (event) => {
                 if (isReplayMode) return;
@@ -336,17 +335,12 @@ function connectWebSocket(symbol, timeframe) {
             };
 
             ws.onerror = (error) => {
-                isConnectingWs = false;
-            };
-
-            ws.onclose = () => {
-                isConnectingWs = false;
+                // Silently handle
             };
         } catch (err) {
-            isConnectingWs = false;
             console.error('WebSocket connection error:', err);
         }
-    }, 150);
+    }, 300);
 }
 
 // --- Bar Replay Interactive Functions ---
@@ -361,6 +355,10 @@ function promptReplaySelection() {
 
 function activateReplayFromIndex(index) {
     isReplayMode = true;
+    if (wsDebounceTimer) {
+        clearTimeout(wsDebounceTimer);
+        wsDebounceTimer = null;
+    }
     if (ws) {
         try {
             ws.onopen = null;
