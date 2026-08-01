@@ -273,7 +273,7 @@ async function loadMoreHistoricalData() {
     }
 }
 
-// 5. WebSocket Realtime Ticks (Fixed & Optimized)
+// 5. WebSocket Realtime Ticks (Fixed & Optimized - Port 9443 Removed)
 function connectWebSocket(symbol, timeframe) {
     if (ws) {
         ws.onopen = null;
@@ -288,7 +288,7 @@ function connectWebSocket(symbol, timeframe) {
     
     if (isReplayMode) return;
 
-    const wsUrl = `wss://stream.binance.com:9443/ws/${symbol.toLowerCase()}@kline_${timeframe}`;
+    const wsUrl = `wss://stream.binance.com/ws/${symbol.toLowerCase()}@kline_${timeframe}`;
     ws = new WebSocket(wsUrl);
 
     ws.onmessage = (event) => {
@@ -315,7 +315,7 @@ function connectWebSocket(symbol, timeframe) {
     };
 
     ws.onerror = (error) => {
-        // Handle websocket errors silently or log appropriately
+        console.error('WebSocket Error:', error);
     };
 }
 
