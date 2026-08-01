@@ -10,12 +10,10 @@ class ChartSettingsModal {
         this.modalElement = document.getElementById('tradingViewSettingsModal');
         
         if (this.modalElement) {
-            // Force hide initially
             this.modalElement.style.setProperty('display', 'none', 'important');
         }
 
         this.attachEventListeners();
-        this.preventExternalForcedOpen();
     }
 
     attachEventListeners() {
@@ -50,14 +48,12 @@ class ChartSettingsModal {
             });
         });
 
-        // 3. Close / Cancel / OK / Cross Button Listeners (Targeting directly)
+        // 3. Close / Cancel / OK / Cross Button Listeners
         const closeModal = () => { 
             modal.style.setProperty('display', 'none', 'important'); 
         };
 
-        // Universal click listener inside modal
         modal.addEventListener('click', (e) => {
-            // Check if close, cancel, ok or the cross (×) text was clicked
             const target = e.target;
             const isCloseBtn = target.id === 'closeChartSettings' || 
                                target.classList.contains('close-btn') || 
@@ -79,7 +75,7 @@ class ChartSettingsModal {
             }
         });
 
-        // Close when clicking outside modal container (on background overlay)
+        // Close when clicking outside modal container
         modal.addEventListener('click', (e) => {
             if (e.target === modal) {
                 closeModal();
@@ -87,34 +83,46 @@ class ChartSettingsModal {
         });
     }
 
-    preventExternalForcedOpen() {
-        // If some other script forces the modal to open on load, watch and block it unless triggered by user
-        if (!this.modalElement) return;
-
-        const observer = new MutationObserver((mutations) => {
-            mutations.forEach((mutation) => {
-                if (mutation.attributeName === 'style') {
-                    const display = window.getComputedStyle(this.modalElement).display;
-                    // If it opened automatically without user interaction flag, you can handle it here
-                }
-            });
-        });
-
-        observer.observe(this.modalElement, { attributes: true });
-    }
-
     applySettingsToChart() {
         if (!window.chart || !window.candlestickSeries) return;
 
-        const vertGridToggle = document.getElementById('masterGridToggle');
-        const vertGrid = vertGridToggle ? vertGridToggle.checked : true;
+        // 1. Read values securely from inputs (with fallback selectors if IDs vary)
+        const upBodyInput = document.getElementById('tvUpBodyColor') || document.querySelector('#panel-symbol input[type="color"]');
+        const downBodyInput = document.querySelector('#tvDownBodyColor') || document.querySelectorAll('#panel-symbol input[type="color"]')[1];
+        
+        const vertGridToggle = document.getElementById('tvVertGridToggle') || document.getElementById('masterGridToggle');
+        const horzGridToggle = document.getElementById('tvHorzGridToggle');
+        const bgColorInput = document.getElementById('tvBgColor') || document.querySelector('#panel-canvas input[type="color"]');
 
-        window.chart.applyOptions({
+        // 2. Apply options to Lightweight Charts series & instance
+        const seriesOptions = {};
+        if (upBodyInput) {
+            seriesOptions.upColor = upBodyInput.value;
+            seriesOptions.borderUpColor = upBodyInput.value;
+            seriesOptions.wickUpColor = upBodyInput.value;
+        }
+        if (downBodyInput) {
+            seriesOptions.downColor = downBodyInput.value;
+            seriesOptions.borderDownColor = downBodyInput.value;
+            seriesOptions.wickDownColor = downBodyInput.value;
+        }
+
+        window.candlestickSeries.applyOptions(seriesOptions);
+
+        const chartOptions = {
             grid: {
-                vertLines: { visible: vertGrid },
-                horzLines: { visible: vertGrid }
+                vertLines: { visible: vertGridToggle ? vertGridToggle.checked : true },
+                horzLines: { visible: horzGridToggle ? horzGridToggle.checked : true }
             }
-        });
+        };
+
+        if (bgColorInput) {
+            chartOptions.layout = {
+                background: { type: 'solid', color: bgColorInput.value }
+            };
+        }
+
+        window.chart.applyOptions(chartOptions);
     }
 
     show() {
