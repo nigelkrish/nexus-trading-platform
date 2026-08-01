@@ -1,4 +1,4 @@
-// --- Nexus Trading Platform - Advanced Drawing Manager (Fixed Drawing & Selection Logic) ---
+// --- Nexus Trading Platform - Advanced Drawing Manager (TradingView Style Rotated Text) ---
 
 class TrendToolsModule {
     constructor() {
@@ -102,25 +102,34 @@ class TrendToolsModule {
             ctx.fillRect(Math.min(item.x1, item.x2), Math.min(item.y1, item.y1 + heightOffset), Math.abs(item.x2 - item.x1), Math.abs(heightOffset));
         }
 
-        // Render Text if available, otherwise show "Add text" placeholder when selected
+        // --- TradingView Style Rotated & Aligned Text Rendering ---
         const midX = (item.x1 + item.x2) / 2;
         const midY = (item.y1 + item.y2) / 2;
+        
+        let angle = Math.atan2(item.y2 - item.y1, item.x2 - item.x1);
+        
+        // Text එක උඩුකුරුව (readable) තබා ගැනීමට angle එක ඍණ/ධ්‍රැව මාරු කිරීම
+        if (angle > Math.PI / 2) angle -= Math.PI;
+        if (angle < -Math.PI / 2) angle += Math.PI;
+
+        ctx.save();
+        ctx.translate(midX, midY);
+        ctx.rotate(angle);
 
         if (item.text) {
-            ctx.save();
             ctx.font = '12px Inter, sans-serif';
             ctx.fillStyle = item.color || '#26a69a';
             ctx.textAlign = 'center';
-            ctx.fillText(item.text, midX, midY - 8);
-            ctx.restore();
+            ctx.textBaseline = 'bottom';
+            ctx.fillText(item.text, 0, -6);
         } else if (isSelected) {
-            ctx.save();
             ctx.font = '11px Inter, sans-serif';
             ctx.fillStyle = '#848e9c';
             ctx.textAlign = 'center';
-            ctx.fillText('Add text', midX, midY - 8);
-            ctx.restore();
+            ctx.textBaseline = 'bottom';
+            ctx.fillText('+ Add text', 0, -6);
         }
+        ctx.restore();
 
         // Render TradingView Style Selection Handles & Boxes
         if (isSelected) {
@@ -408,7 +417,6 @@ class NexusDrawingManager {
             const mouseX = e.clientX - rect.left;
             const mouseY = e.clientY - rect.top;
 
-            // Handle moving existing selected shape or its endpoints
             if (this.draggingHandle && this.selectedDrawing) {
                 const dx = mouseX - dragStartX;
                 const dy = mouseY - dragStartY;
@@ -431,7 +439,6 @@ class NexusDrawingManager {
                 return;
             }
 
-            // Real-time preview when dragging mouse to draw a new shape
             if (isDrawing && currentDrawObj) {
                 currentDrawObj.x2 = mouseX;
                 currentDrawObj.y2 = mouseY;
@@ -451,7 +458,6 @@ class NexusDrawingManager {
                 currentDrawObj.x2 = e.clientX - rect.left;
                 currentDrawObj.y2 = e.clientY - rect.top;
 
-                // Only save if it's not a mere click
                 if (Math.hypot(currentDrawObj.x2 - currentDrawObj.x1, currentDrawObj.y2 - currentDrawObj.y1) > 5) {
                     this.drawings.push(currentDrawObj);
                     this.selectedDrawing = currentDrawObj;
