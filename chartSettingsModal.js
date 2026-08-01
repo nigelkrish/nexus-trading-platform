@@ -7,7 +7,6 @@ class ChartSettingsModal {
     }
 
     init() {
-        // Since HTML structure is already in index.html, we just reference it
         this.modalElement = document.getElementById('tradingViewSettingsModal');
         this.attachEventListeners();
     }
@@ -44,8 +43,8 @@ class ChartSettingsModal {
             });
         });
 
-        // 3. Close / Cancel / OK buttons
-        const closeBtn = modal.querySelector('#closeChartSettings');
+        // 3. Close / Cancel / OK buttons (Multiple selectors handled for safety)
+        const closeBtn = modal.querySelector('#closeChartSettings') || modal.querySelector('.close-btn') || modal.querySelector('.tv-close-btn');
         const cancelBtn = modal.querySelector('#tvCancelBtn');
         const okBtn = modal.querySelector('#tvOkBtn');
 
@@ -53,8 +52,19 @@ class ChartSettingsModal {
             modal.style.display = 'none'; 
         };
 
-        if (closeBtn) closeBtn.addEventListener('click', closeModal);
-        if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
+        if (closeBtn) {
+            closeBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                closeModal();
+            });
+        }
+
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                closeModal();
+            });
+        }
         
         // Close when clicking outside modal container
         window.addEventListener('click', (e) => { 
@@ -73,7 +83,6 @@ class ChartSettingsModal {
     applySettingsToChart() {
         if (!window.chart || !window.candlestickSeries) return;
 
-        // Read UI inputs safely if they exist
         const vertGridToggle = document.getElementById('masterGridToggle');
         const vertGrid = vertGridToggle ? vertGridToggle.checked : true;
 
