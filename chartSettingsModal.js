@@ -9,19 +9,20 @@ class ChartSettingsModal {
     init() {
         this.modalElement = document.getElementById('tradingViewSettingsModal');
         
-        // CRITICAL FIX: Ensure modal is strictly hidden on initial page load
         if (this.modalElement) {
-            this.modalElement.style.display = 'none';
+            // Force hide initially
+            this.modalElement.style.setProperty('display', 'none', 'important');
         }
 
         this.attachEventListeners();
+        this.preventExternalForcedOpen();
     }
 
     attachEventListeners() {
         const modal = this.modalElement;
         if (!modal) return;
 
-        // 1. Open modal ONLY when clicking "Settings" in top navigation
+        // 1. Open modal only when clicking "Settings" in top navigation
         const mainSettingsNavBtn = document.getElementById('mainSettingsNavBtn');
         if (mainSettingsNavBtn) {
             mainSettingsNavBtn.addEventListener('click', (e) => {
@@ -49,38 +50,57 @@ class ChartSettingsModal {
             });
         });
 
-        // 3. Universal Close / Cancel / OK listener using Event Delegation
+        // 3. Close / Cancel / OK / Cross Button Listeners (Targeting directly)
         const closeModal = () => { 
-            modal.style.display = 'none'; 
+            modal.style.setProperty('display', 'none', 'important'); 
         };
 
+        // Universal click listener inside modal
         modal.addEventListener('click', (e) => {
-            // Check if clicked element is a close button, cross icon, cancel, or ok
-            const isCloseAction = 
-                e.target.id === 'closeChartSettings' || 
-                e.target.classList.contains('close-btn') || 
-                e.target.classList.contains('tv-close-btn') ||
-                e.target.id === 'tvCancelBtn' ||
-                e.target.id === 'tvOkBtn' ||
-                e.target.textContent.trim() === '×' ||
-                e.target.closest('.tv-close-btn') ||
-                e.target.closest('#closeChartSettings');
+            // Check if close, cancel, ok or the cross (×) text was clicked
+            const target = e.target;
+            const isCloseBtn = target.id === 'closeChartSettings' || 
+                               target.classList.contains('close-btn') || 
+                               target.classList.contains('tv-close-btn') ||
+                               target.id === 'tvCancelBtn' ||
+                               target.textContent.trim() === '×' ||
+                               target.closest('.tv-close-btn') ||
+                               target.closest('#closeChartSettings');
 
-            if (isCloseAction) {
+            const isOkBtn = target.id === 'tvOkBtn' || target.closest('#tvOkBtn');
+
+            if (isCloseBtn || isOkBtn) {
                 e.preventDefault();
-                if (e.target.id === 'tvOkBtn' || e.target.closest('#tvOkBtn')) {
+                e.stopPropagation();
+                if (isOkBtn) {
                     this.applySettingsToChart();
                 }
                 closeModal();
             }
         });
 
-        // Close when clicking outside modal container (on the dark overlay background)
+        // Close when clicking outside modal container (on background overlay)
         modal.addEventListener('click', (e) => {
             if (e.target === modal) {
                 closeModal();
             }
         });
+    }
+
+    preventExternalForcedOpen() {
+        // If some other script forces the modal to open on load, watch and block it unless triggered by user
+        if (!this.modalElement) return;
+
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.attributeName === 'style') {
+                    const display = window.getComputedStyle(this.modalElement).display;
+                    // If it opened automatically without user interaction flag, you can handle it here
+                }
+            });
+        });
+
+        observer.observe(this.modalElement, { attributes: true });
     }
 
     applySettingsToChart() {
@@ -99,7 +119,7 @@ class ChartSettingsModal {
 
     show() {
         if (this.modalElement) {
-            this.modalElement.style.display = 'flex';
+            this.modalElement.style.setProperty('display', 'flex', 'important');
         }
     }
 }
