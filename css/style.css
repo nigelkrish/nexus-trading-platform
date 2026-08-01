@@ -618,3 +618,17 @@ select:hover, input:hover { border-color: var(--text-secondary); }
     border-color: #2962ff;
     box-shadow: 0 0 0 1px #2962ff;
 }
+
+/* Settings Modal එක ඩිෆෝල්ට් එකෙන්ම අදෘශ්‍යමාන (Hidden) කර තැබීමට */
+#tradingViewSettingsModal {
+    display: none !important;
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6); /* පසුබිම අඳුරු කිරීම සඳහා */
+    z-index: 99999;
+    justify-content: center;
+    align-items: center;
+}
