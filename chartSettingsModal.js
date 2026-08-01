@@ -1,73 +1,213 @@
-document.addEventListener("DOMContentLoaded", () => {
-    // 1. Initial Load එකේදී Default Colors ඩීෆෝල්ට් සිලෙක්ට් වෙලා තියෙන්න දාන කොටස
-    const defaultSettings = {
-        upBody: "#2962ff",
-        downBody: "#000000",
-        upBorder: "#2962ff",
-        downBorder: "#000000",
-        upWick: "#2962ff",
-        downWick: "#000000"
-    };
+// --- Nexus Trading Platform - Chart Settings Modal Module ---
 
-    // UI එකේ input සහ color swatch වලට මුල් අගයන් දීම
-    function initColorPickers() {
+class ChartSettingsModal {
+    constructor() {
+        this.modalElement = null;
+        
+        // TradingView වගේ පාවිච්චි කරන Default Colors
+        this.defaultSettings = {
+            upBody: '#26a69a',      // TradingView Green
+            downBody: '#ef5350',    // TradingView Red
+            upBorder: '#26a69a',
+            downBorder: '#ef5350',
+            upWick: '#26a69a',
+            downWick: '#ef5350',
+            bgColor: '#131722'
+        };
+
+        this.init();
+    }
+
+    init() {
+        this.modalElement = document.getElementById('tradingViewSettingsModal');
+        
+        if (this.modalElement) {
+            this.modalElement.style.setProperty('display', 'none', 'important');
+        }
+
+        this.attachEventListeners();
+        this.initColorPickers(); // මෝඩල් එක లోඩ් වෙද්දී කලර්ස් ඔටෝ සෙට් කිරීම
+    }
+
+    // කලර් පික්ස් වලට සහ ස්වොච් (Swatches) වලට ඩිෆෝල්ට්/වත්මන් පාට ඔටෝ දාලා දෙන්න
+    initColorPickers() {
+        const modal = this.modalElement;
+        if (!modal) return;
+
+        // උදාහරණයක් ලෙස අදාළ ඉන්පුට් සහ Swatch මැප් කිරීම
         const colorMappings = [
-            { inputId: "tvUpBodyColor", value: defaultSettings.upBody },
-            { inputId: "tvDownBodyColor", value: defaultSettings.downBody },
-            { inputId: "tvUpBorderColor", value: defaultSettings.upBorder },
-            { inputId: "tvDownBorderColor", value: defaultSettings.downBorder },
-            { inputId: "tvUpWickColor", value: defaultSettings.upWick },
-            { inputId: "tvDownWickColor", value: defaultSettings.downWick }
+            { id: 'tvUpBodyColor', defaultVal: this.defaultSettings.upBody },
+            { id: 'tvDownBodyColor', defaultVal: this.defaultSettings.downBody },
+            { id: 'tvUpBorderColor', defaultVal: this.defaultSettings.upBorder },
+            { id: 'tvDownBorderColor', defaultVal: this.defaultSettings.downBorder },
+            { id: 'tvUpWickColor', defaultVal: this.defaultSettings.upWick },
+            { id: 'tvDownWickColor', defaultVal: this.defaultSettings.downWick },
+            { id: 'tvBgColor', defaultVal: this.defaultSettings.bgColor }
         ];
 
         colorMappings.forEach(item => {
-            const inputEl = document.getElementById(item.inputId);
+            const inputEl = document.getElementById(item.id) || modal.querySelector(`#${item.id}`);
             if (inputEl) {
-                inputEl.value = item.value;
-                const swatch = inputEl.parentElement.querySelector(".tv-custom-color-swatch");
-                if (swatch) {
-                    swatch.style.backgroundColor = item.value;
+                // දැනට චාට් එකේ සෙටින්ග්ස් තියෙනවා නම් ඒවා ගන්න, නැත්නම් ඩිෆෝල්ට් එක දෙන්න
+                inputEl.value = item.defaultVal;
+                
+                // Rounded box (swatch) එකේ කලර් එක අප්ඩේට් කරන්න
+                const wrapper = inputEl.closest('.tv-color-box-wrapper') || inputEl.parentElement;
+                if (wrapper) {
+                    const swatch = wrapper.querySelector('.tv-custom-color-swatch');
+                    if (swatch) {
+                        swatch.style.backgroundColor = item.defaultVal;
+                    }
                 }
             }
         });
     }
 
-    initColorPickers();
+    attachEventListeners() {
+        const modal = this.modalElement;
+        if (!modal) return;
 
-    // 2. අපි වෙනස් කළාට පස්සේ (Change Event) පමණක් චාට් එකට පාට මාරු වෙන්න හදන කොටස
-    const colorInputs = document.querySelectorAll(".tv-native-color-input");
-    colorInputs.forEach(input => {
-        input.addEventListener("input", (e) => {
-            const selectedColor = e.target.value;
-            const swatch = e.target.parentElement.querySelector(".tv-custom-color-swatch");
-            
-            // Rounded box එකේ background එක ක්ෂණිකව අපේට් කිරීම
-            if (swatch) {
-                swatch.style.backgroundColor = selectedColor;
+        // 1. Open modal only when clicking "Settings" in top navigation
+        const mainSettingsNavBtn = document.getElementById('mainSettingsNavBtn');
+        if (mainSettingsNavBtn) {
+            mainSettingsNavBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.show();
+            });
+        }
+
+        // 2. Tab Switching logic inside modal
+        const tabs = modal.querySelectorAll('.tv-tab-item');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+
+                const targetId = tab.getAttribute('data-target');
+                modal.querySelectorAll('.tv-panel-content').forEach(panel => {
+                    panel.classList.remove('active');
+                });
+                
+                const targetPanel = modal.querySelector(`#${targetId}`);
+                if (targetPanel) {
+                    targetPanel.classList.add('active');
+                }
+            });
+        });
+
+        // 3. Live UI update for Rounded Color Boxes when user changes a color in panel
+        const colorInputs = modal.querySelectorAll('input[type="color"], .tv-native-color-input');
+        colorInputs.forEach(input => {
+            input.addEventListener('input', (e) => {
+                const selectedColor = e.target.value;
+                const wrapper = e.target.closest('.tv-color-box-wrapper') || e.target.parentElement;
+                if (wrapper) {
+                    const swatch = wrapper.querySelector('.tv-custom-color-swatch');
+                    if (swatch) {
+                        swatch.style.backgroundColor = selectedColor;
+                    }
+                }
+            });
+        });
+
+        // 4. Close / Cancel / OK / Cross Button Listeners
+        const closeModal = () => { 
+            modal.style.setProperty('display', 'none', 'important'); 
+        };
+
+        modal.addEventListener('click', (e) => {
+            const target = e.target;
+            const isCloseBtn = target.id === 'closeChartSettings' || 
+                               target.classList.contains('close-btn') || 
+                               target.classList.contains('tv-close-btn') ||
+                               target.id === 'tvCancelBtn' ||
+                               target.textContent.trim() === '×' ||
+                               target.closest('.tv-close-btn') ||
+                               target.closest('#closeChartSettings');
+
+            const isOkBtn = target.id === 'tvOkBtn' || target.closest('#tvOkBtn');
+
+            if (isCloseBtn || isOkBtn) {
+                e.preventDefault();
+                e.stopPropagation();
+                if (isOkBtn) {
+                    // OK කලාම පමණක් චාට් එකට සෙටින්ග්ස් ඇප්ලයි වේ
+                    this.applySettingsToChart();
+                }
+                closeModal();
             }
         });
 
-        // වෙනස්කම් ඉන්පුට් කරලා අවසන් වුණාම (Change) චාට් එකට පාට යැවීම
-        input.addEventListener("change", (e) => {
-            const colorId = e.target.id;
-            const newColor = e.target.value;
-            applyChartColorChange(colorId, newColor);
-        });
-    });
-
-    function applyChartColorChange(id, color) {
-        // මෙතැනදී ඔයාගේ Lightweight Charts වලට අදාළ වන Series එක Update කිරීමේ කෝඩ් එක ක්‍රියාත්මක වේ
-        if (typeof window.myChartSeries !== "undefined" && window.myChartSeries) {
-            // උදාහරණයක් ලෙස Candles options අප්ඩේට් කිරීම
-            let options = {};
-            if (id.includes("Body")) {
-                options = id.includes("Up") ? { upColor: color } : { downColor: color };
-            } else if (id.includes("Border")) {
-                options = id.includes("Up") ? { borderUpColor: color } : { borderDownColor: color };
-            } else if (id.includes("Wick")) {
-                options = id.includes("Up") ? { wickUpColor: color } : { wickDownColor: color };
+        // Close when clicking outside modal container
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                closeModal();
             }
-            window.myChartSeries.applyOptions(options);
+        });
+    }
+
+    applySettingsToChart() {
+        if (!window.chart || !window.candlestickSeries) return;
+
+        // 1. Read values securely from inputs
+        const upBodyInput = document.getElementById('tvUpBodyColor') || document.querySelector('#panel-symbol input[type="color"]');
+        const downBodyInput = document.getElementById('tvDownBodyColor') || document.querySelectorAll('#panel-symbol input[type="color"]')[1];
+        
+        const upBorderInput = document.getElementById('tvUpBorderColor');
+        const downBorderInput = document.getElementById('tvDownBorderColor');
+        const upWickInput = document.getElementById('tvUpWickColor');
+        const downWickInput = document.getElementById('tvDownWickColor');
+
+        const vertGridToggle = document.getElementById('tvVertGridToggle') || document.getElementById('masterGridToggle');
+        const horzGridToggle = document.getElementById('tvHorzGridToggle');
+        const bgColorInput = document.getElementById('tvBgColor') || document.querySelector('#panel-canvas input[type="color"]');
+
+        // 2. Apply options to Lightweight Charts series
+        const seriesOptions = {};
+        
+        if (upBodyInput) seriesOptions.upColor = upBodyInput.value;
+        if (downBodyInput) seriesOptions.downColor = downBodyInput.value;
+        
+        if (upBorderInput) seriesOptions.borderUpColor = upBorderInput.value;
+        else if (upBodyInput) seriesOptions.borderUpColor = upBodyInput.value;
+
+        if (downBorderInput) seriesOptions.borderDownColor = downBorderInput.value;
+        else if (downBodyInput) seriesOptions.borderDownColor = downBodyInput.value;
+
+        if (upWickInput) seriesOptions.wickUpColor = upWickInput.value;
+        else if (upBodyInput) seriesOptions.wickUpColor = upBodyInput.value;
+
+        if (downWickInput) seriesOptions.wickDownColor = downWickInput.value;
+        else if (downBodyInput) seriesOptions.wickDownColor = downBodyInput.value;
+
+        window.candlestickSeries.applyOptions(seriesOptions);
+
+        // 3. Apply chart options (Grid & Background)
+        const chartOptions = {
+            grid: {
+                vertLines: { visible: vertGridToggle ? vertGridToggle.checked : true },
+                horzLines: { visible: horzGridToggle ? horzGridToggle.checked : true }
+            }
+        };
+
+        if (bgColorInput) {
+            chartOptions.layout = {
+                background: { type: 'solid', color: bgColorInput.value }
+            };
+        }
+
+        window.chart.applyOptions(chartOptions);
+    }
+
+    show() {
+        if (this.modalElement) {
+            this.modalElement.style.setProperty('display', 'flex', 'important');
+            this.initColorPickers(); // මෝඩල් එක ඕන් වෙනකොට අලුත්ම තත්ත්වය ලෝඩ් කරගන්න
         }
     }
+}
+
+// Initialize and attach to global scope
+document.addEventListener('DOMContentLoaded', () => {
+    window.chartSettingsModal = new ChartSettingsModal();
 });
