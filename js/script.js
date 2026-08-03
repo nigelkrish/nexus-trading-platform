@@ -62,7 +62,19 @@ function initChart() {
             borderColor: '#2a2e39',
             timeVisible: true,
             secondsVisible: false,
-            fixLeftEdge: true,
+            fixLeftEdge: false, // වම් කෙළවර හිරවීම වැළැක්වීමට false කරන ලදී
+        },
+        // --- Zoom සහ Scroll පහසුකම් නිවැරදිව ක්‍රියාත්මක වීමට ---
+        handleScroll: {
+            mouseWheel: true,
+            pressedMouseMove: true,
+            horzTouchDrag: true,
+            vertTouchDrag: true,
+        },
+        handleScale: {
+            axisPressedMouseMove: true,
+            mouseWheel: true,
+            pinch: true,
         },
     });
 
