@@ -91,13 +91,18 @@ function initChart() {
     window.chart = chart;
     window.candlestickSeries = candlestickSeries;
 
-    // කෑන්වස් එකට මවුස් ඊවෙන්ට්ස් නිවැරදිව ලැබෙන බව තහවුරු කිරීම
-    setTimeout(() => {
+    // කෑන්වස් සහ කොන්ටේනර් එකට මවුස් ඊවෙන්ට්ස් නිවැරදිව ලැබෙන බව තහවුරු කිරීම සහ නිරන්තරයෙන් ෆෝර්ස් කිරීම
+    const enablePointerEvents = () => {
+        container.style.pointerEvents = 'auto';
         const canvases = container.querySelectorAll('canvas');
         canvases.forEach(canvas => {
             canvas.style.pointerEvents = 'auto';
         });
-    }, 300);
+    };
+
+    enablePointerEvents();
+    setTimeout(enablePointerEvents, 200);
+    setTimeout(enablePointerEvents, 800);
 
     // Window Resize හැසිරවීම
     window.addEventListener('resize', () => {
