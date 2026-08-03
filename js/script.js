@@ -1,17 +1,15 @@
-// --- Nexus Trading Platform - Script.js (Fully Fixed & Optimized with Modular Context Menu) ---
+// --- Nexus Trading Platform - Script.js (Complete & Fixed) ---
 
 let chart;
 let candlestickSeries;
-let currentSymbol = 'PAXGUSDT';
+let currentSymbol = 'BTCUSDT';
 let currentTimeframe = '1m';
 let ws = null;
 
-// Pagination / History Loading States
 let oldestTimestamp = null;
 let isLoadingMore = false;
 let hasMoreData = true;
 
-// Bar Replay States
 let isReplayMode = false;
 let isSelectingReplayPoint = false;
 let fullHistoricalData = [];
@@ -19,17 +17,28 @@ let replayIndex = 0;
 let replayTimer = null;
 let isPlaying = false;
 
+let activeWsConnectionId = 0;
+
 document.addEventListener('DOMContentLoaded', () => {
-    window.currentSymbol = currentSymbol; // Sync initial global symbol
+    window.currentSymbol = currentSymbol; 
     initChart();
     setupEventListeners();
     loadChartData(currentSymbol, currentTimeframe);
 });
 
-// 1. Chart Initialization
+// 1. Chart Initialization with Full Zoom & Scroll Support
 function initChart() {
     const container = document.getElementById('chartContainer');
     if (!container) return;
+
+    container.innerHTML = '';
+    container.style.position = 'relative';
+    container.style.width = '100%';
+    container.style.height = '100%';
+    container.style.overflow = 'hidden';
+    container.style.pointerEvents = 'auto';
+
+    const savedSessionBreaks = localStorage.getItem('nexus_session_breaks') === 'true';
 
     chart = LightweightCharts.createChart(container, {
         width: container.clientWidth,
@@ -39,54 +48,78 @@ function initChart() {
             textColor: '#d1d4dc',
         },
         grid: {
-            vertLines: { color: '#1f293d' },
-            horzLines: { color: '#1f293d' },
+            vertLines: { color: savedSessionBreaks ? '#2a2e39' : '#1f293d', visible: true },
+            horzLines: { color: '#1f293d', visible: true },
         },
         crosshair: {
             mode: LightweightCharts.CrosshairMode.Normal,
         },
         rightPriceScale: {
             borderColor: '#2a2e39',
+            autoScale: true,
+            visible: true,
         },
         timeScale: {
             borderColor: '#2a2e39',
             timeVisible: true,
             secondsVisible: false,
+            fixLeftEdge: false,
+            rightOffset: 5,
+        },
+        // Zoom සහ Scroll කිරීමේ ක්‍රමවේදයන් සක්‍රීය කිරීම
+        handleScroll: {
+            mouseWheel: true,
+            pressedMouseMove: true,
+            horzTouchDrag: true,
+            vertTouchDrag: true,
+        },
+        handleScale: {
+            axisPressedMouseMove: true,
+            mouseWheel: true,
+            pinch: true,
         },
     });
 
     candlestickSeries = chart.addCandlestickSeries({
-        upColor: '#26a69a',
-        downColor: '#ef5350',
+        upColor: '#089981',
+        downColor: '#f23645',
         borderVisible: false,
-        wickUpColor: '#26a69a',
-        wickDownColor: '#ef5350',
+        wickUpColor: '#089981',
+        wickDownColor: '#f23645',
     });
 
-    // Make chart and series globally accessible for modules
     window.chart = chart;
     window.candlestickSeries = candlestickSeries;
 
-    // Handle Responsive Resize
+    // කෑන්වස් එකට මවුස් ඊවෙන්ට්ස් නිවැරදිව ලැබෙන බව තහවුරු කිරීම
+    setTimeout(() => {
+        const canvases = container.querySelectorAll('canvas');
+        canvases.forEach(canvas => {
+            canvas.style.pointerEvents = 'auto';
+        });
+    }, 300);
+
+    // Window Resize හැසිරවීම
     window.addEventListener('resize', () => {
         if (chart && container) {
-            chart.applyOptions({ width: container.clientWidth, height: container.clientHeight });
+            chart.applyOptions({ 
+                width: container.clientWidth, 
+                height: container.clientHeight 
+            });
         }
     });
 
-    // TradingView-style Lazy Loading on Scroll
+    // Lazy Loading on Scroll (වමතට ස්ක්‍රෝල් කළ විට පැරණි ඩේටා ලෝඩ් වීම)
     chart.timeScale().subscribeVisibleLogicalRangeChange(timeRange => {
         if (!timeRange || isReplayMode) return;
-        
         if (timeRange.from < 5 && !isLoadingMore && hasMoreData) {
             loadMoreHistoricalData();
         }
     });
 
-    // TradingView style: Click on chart to set Replay starting point
+    // Replay සඳහා ක්ලික් කිරීම
     chart.subscribeClick(param => {
         if (!isSelectingReplayPoint || !param.time) return;
-
         const clickedTime = param.time;
         const targetIndex = fullHistoricalData.findIndex(item => item.time === clickedTime);
 
@@ -97,17 +130,13 @@ function initChart() {
         }
     });
 
-    // TradingView-style Right Click Menu Integration
+    // Right Click Context Menu
     container.addEventListener('contextmenu', (e) => {
-        e.preventDefault(); // Stop default browser right-click menu
-        
+        e.preventDefault();
         if (!chart || !candlestickSeries) return;
 
-        // Get mouse coordinates relative to chart container
         const rect = container.getBoundingClientRect();
         const y = e.clientY - rect.top;
-
-        // Convert pixel y-coordinate to price value using Lightweight Charts API
         const coordinatePrice = candlestickSeries.coordinateToPrice(y);
         
         if (coordinatePrice !== null && window.chartContextMenu) {
@@ -122,8 +151,11 @@ function setupEventListeners() {
     if (symbolSelect) {
         symbolSelect.addEventListener('change', (e) => {
             currentSymbol = e.target.value;
-            window.currentSymbol = currentSymbol; // Sync with global window object
-            document.getElementById('activeSymbolLabel').innerText = currentSymbol;
+            window.currentSymbol = currentSymbol;
+            
+            const symbolLabel = document.getElementById('activeSymbolLabel');
+            if (symbolLabel) symbolLabel.innerText = currentSymbol;
+
             exitReplayMode();
             resetAndReload();
         });
@@ -136,33 +168,26 @@ function setupEventListeners() {
                 tfGroup.querySelectorAll('.tf-btn').forEach(b => b.classList.remove('active'));
                 e.target.classList.add('active');
                 currentTimeframe = e.target.getAttribute('data-tf');
-                document.getElementById('activeTimeframeLabel').innerText = currentTimeframe;
+                
+                const tfLabel = document.getElementById('activeTimeframeLabel');
+                if (tfLabel) tfLabel.innerText = currentTimeframe;
+
                 exitReplayMode();
                 resetAndReload();
             });
         });
     }
 
-    // Bar Replay Buttons
     const replayToggleBtn = document.getElementById('replayToggleBtn');
     const replayStepBtn = document.getElementById('replayStepBtn');
     const replayPlayBtn = document.getElementById('replayPlayBtn');
     const replayExitBtn = document.getElementById('replayExitBtn');
 
-    if (replayToggleBtn) {
-        replayToggleBtn.addEventListener('click', promptReplaySelection);
-    }
-    if (replayStepBtn) {
-        replayStepBtn.addEventListener('click', replayStepForward);
-    }
-    if (replayPlayBtn) {
-        replayPlayBtn.addEventListener('click', toggleReplayPlay);
-    }
-    if (replayExitBtn) {
-        replayExitBtn.addEventListener('click', exitReplayMode);
-    }
+    if (replayToggleBtn) replayToggleBtn.addEventListener('click', promptReplaySelection);
+    if (replayStepBtn) replayStepBtn.addEventListener('click', replayStepForward);
+    if (replayPlayBtn) replayPlayBtn.addEventListener('click', toggleReplayPlay);
+    if (replayExitBtn) replayExitBtn.addEventListener('click', exitReplayMode);
 
-    // Sidebar Manual Alert Setup Button
     const setAlertBtn = document.getElementById('setAlertBtn');
     if (setAlertBtn) {
         setAlertBtn.addEventListener('click', () => {
@@ -171,35 +196,55 @@ function setupEventListeners() {
             if (price && window.nexusAlerts) {
                 window.nexusAlerts.addAlert(currentSymbol, price, condition);
             } else {
-                alert('කරුණාකර නිවැරදි මිලක් ඇතුළත් කරන්න.');
+                alert('Please enter a valid price.');
             }
+        });
+    }
+
+    const navTabs = document.querySelectorAll('.tab-btn');
+    navTabs.forEach(tab => {
+        tab.addEventListener('click', (e) => {
+            const tabName = e.target.getAttribute('data-tab');
+            navTabs.forEach(t => t.classList.remove('active'));
+            e.target.classList.add('active');
+
+            if (tabName === 'settings') {
+                const modal = document.getElementById('masterSettingsModal');
+                if (modal) modal.style.display = 'flex';
+            }
+        });
+    });
+
+    const closeMasterSettings = document.getElementById('closeMasterSettings');
+    if (closeMasterSettings) {
+        closeMasterSettings.addEventListener('click', () => {
+            const modal = document.getElementById('masterSettingsModal');
+            if (modal) modal.style.display = 'none';
         });
     }
 }
 
+// 3. Reset and Reload Chart Safely
 function resetAndReload() {
     oldestTimestamp = null;
     hasMoreData = true;
+    activeWsConnectionId++;
     
-    // පරණ WebSocket කනෙක්ෂන් එක ආරක්ෂාකාරීව Close කිරීම
     if (ws) {
-        ws.onopen = null;
-        ws.onmessage = null;
-        ws.onerror = null;
-        ws.onclose = null;
-        if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
-            ws.close();
-        }
+        try { ws.close(); } catch (e) {}
         ws = null;
     }
-    
     loadChartData(currentSymbol, currentTimeframe);
 }
 
-// 3. Load Initial Historical Data
+// 4. Load Initial Historical Data
 async function loadChartData(symbol, timeframe) {
     try {
-        window.currentSymbol = symbol; // Keep global in sync
+        window.currentSymbol = symbol;
+        if (chart) {
+            chart.priceScale('right').applyOptions({ autoScale: true });
+        }
+
         const url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${timeframe}&limit=500`;
         const response = await fetch(url);
         const data = await response.json();
@@ -217,7 +262,7 @@ async function loadChartData(symbol, timeframe) {
         oldestTimestamp = data[0][0];
         fullHistoricalData = formattedData;
 
-        if (!isReplayMode) {
+        if (!isReplayMode && candlestickSeries) {
             candlestickSeries.setData(formattedData);
             chart.timeScale().fitContent();
             connectWebSocket(symbol, timeframe);
@@ -231,16 +276,14 @@ async function loadChartData(symbol, timeframe) {
     }
 }
 
-// 4. Load More Historical Data (Lazy Loading)
+// 5. Load More Historical Data (Lazy Loading)
 async function loadMoreHistoricalData() {
     if (isLoadingMore || !hasMoreData || !oldestTimestamp || isReplayMode) return;
-
     isLoadingMore = true;
 
     try {
         const limit = 500;
         const url = `https://api.binance.com/api/v3/klines?symbol=${currentSymbol}&interval=${currentTimeframe}&endTime=${oldestTimestamp - 1}&limit=${limit}`;
-        
         const response = await fetch(url);
         const data = await response.json();
 
@@ -259,7 +302,6 @@ async function loadMoreHistoricalData() {
         }));
 
         oldestTimestamp = data[0][0];
-
         const currentSeriesData = candlestickSeries.data() || [];
         const combinedData = [...olderData, ...currentSeriesData];
         
@@ -273,77 +315,69 @@ async function loadMoreHistoricalData() {
     }
 }
 
-// 5. WebSocket Realtime Ticks (Fixed & Optimized)
+// 6. WebSocket Realtime Ticks
 function connectWebSocket(symbol, timeframe) {
+    const connectionId = ++activeWsConnectionId;
     if (ws) {
-        ws.onopen = null;
-        ws.onmessage = null;
-        ws.onerror = null;
-        ws.onclose = null;
-        if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
-            ws.close();
-        }
+        try { ws.close(); } catch (e) {}
         ws = null;
     }
     
     if (isReplayMode) return;
 
-    const wsUrl = `wss://stream.binance.com:9443/ws/${symbol.toLowerCase()}@kline_${timeframe}`;
-    ws = new WebSocket(wsUrl);
+    const wsUrl = `wss://stream.binance.com/ws/${symbol.toLowerCase()}@kline_${timeframe}`;
+    
+    try {
+        const socket = new WebSocket(wsUrl);
+        ws = socket;
 
-    ws.onmessage = (event) => {
-        if (isReplayMode) return;
-        const message = JSON.parse(event.data);
-        if (message.k) {
-            const kline = message.k;
-            const candleData = {
-                time: kline.t / 1000,
-                open: parseFloat(kline.o),
-                high: parseFloat(kline.h),
-                low: parseFloat(kline.l),
-                close: parseFloat(kline.c)
-            };
+        socket.onmessage = (event) => {
+            if (isReplayMode || ws !== socket || connectionId !== activeWsConnectionId) return;
+            try {
+                const message = JSON.parse(event.data);
+                if (message.k) {
+                    const kline = message.k;
+                    const candleData = {
+                        time: kline.t / 1000,
+                        open: parseFloat(kline.o),
+                        high: parseFloat(kline.h),
+                        low: parseFloat(kline.l),
+                        close: parseFloat(kline.c)
+                    };
 
-            candlestickSeries.update(candleData);
-            updatePriceDisplay(candleData.close, candleData.open);
+                    candlestickSeries.update(candleData);
+                    updatePriceDisplay(candleData.close, candleData.open);
 
-            // Pass live price to Modular Alert System
-            if (window.nexusAlerts) {
-                window.nexusAlerts.checkAlerts(candleData.close, currentSymbol);
-            }
-        }
-    };
-
-    ws.onerror = (error) => {
-        // Handle websocket errors silently or log appropriately
-    };
+                    if (window.nexusAlerts) {
+                        window.nexusAlerts.checkAlerts(candleData.close, currentSymbol);
+                    }
+                }
+            } catch (err) {}
+        };
+    } catch (err) {}
 }
 
 // --- Bar Replay Interactive Functions ---
 
 function promptReplaySelection() {
     if (!fullHistoricalData || fullHistoricalData.length === 0) return;
-
     isSelectingReplayPoint = true;
     document.body.style.cursor = 'crosshair';
-    alert('කරුණාකර චාට් එක මත Replay පටන් ගැනීමට අවශ්‍ය කැන්ඩ්ල් එකක් මත ක්ලික් කරන්න.');
+    alert('Please click on a candle on the chart to start Replay from that point.');
 }
 
 function activateReplayFromIndex(index) {
     isReplayMode = true;
+    activeWsConnectionId++;
     if (ws) {
-        ws.onopen = null;
-        ws.onmessage = null;
-        ws.onerror = null;
-        ws.onclose = null;
-        if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
-            ws.close();
-        }
+        try { ws.close(); } catch (e) {}
         ws = null;
     }
 
-    document.getElementById('replayToggleBtn').style.display = 'none';
-    document.getElementById('replayActionButtons').style.display = 'flex';
+    const toggleBtn = document.getElementById('replayToggleBtn');
+    const actionBtns = document.getElementById('replayActionButtons');
+    if (toggleBtn) toggleBtn.style.display = 'none';
+    if (actionBtns) actionBtns.style.display = 'flex';
 
     replayIndex = index;
     const initialReplaySlice = fullHistoricalData.slice(0, replayIndex + 1);
@@ -365,16 +399,13 @@ function replayStepForward() {
         }
     } else {
         stopReplayPlay();
-        alert('Replay අවසන් විය!');
+        alert('Replay finished!');
     }
 }
 
 function toggleReplayPlay() {
-    if (isPlaying) {
-        stopReplayPlay();
-    } else {
-        startReplayPlay();
-    }
+    if (isPlaying) stopReplayPlay();
+    else startReplayPlay();
 }
 
 function startReplayPlay() {
@@ -418,7 +449,7 @@ function exitReplayMode() {
     connectWebSocket(currentSymbol, currentTimeframe);
 }
 
-// 6. UI Price Badge Helper
+// 7. UI Price Badge Helper
 function updatePriceDisplay(currentPrice, openPrice) {
     const priceDisplay = document.getElementById('currentPriceDisplay');
     const changeDisplay = document.getElementById('priceChangeDisplay');
