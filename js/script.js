@@ -1,4 +1,4 @@
-// --- Nexus Trading Platform - Script.js (Instant Symbol Switch & TradingView Settings Integration) ---
+// --- Nexus Trading Platform - Script.js (Fully Fixed Zoom, Scroll & Chart Integration) ---
 
 let chart;
 let candlestickSeries;
@@ -29,10 +29,14 @@ document.addEventListener('DOMContentLoaded', () => {
     loadChartData(currentSymbol, currentTimeframe);
 });
 
-// 1. Chart Initialization
+// 1. Chart Initialization with Full Zoom/Scroll Support
 function initChart() {
     const container = document.getElementById('chartContainer');
     if (!container) return;
+
+    // කන්ටේනර් එකේ CSS ස්ටයිල් හරහා Zoom/Scroll බ්ලොක් වීම වැළැක්වීමට 
+    container.style.pointerEvents = 'auto';
+    container.style.overflow = 'hidden';
 
     // localStorage වලින් කලින් සේව් කරගත් Session Breaks සැකසුම ලබා ගැනීම
     const savedSessionBreaks = localStorage.getItem('nexus_session_breaks') === 'true';
@@ -56,15 +60,15 @@ function initChart() {
         },
         rightPriceScale: {
             borderColor: '#2a2e39',
-            autoScale: true, // ස්කේල් එක ස්වයංක්‍රීයව වෙනස් වීමට සකස් කර ඇත
+            autoScale: true,
         },
         timeScale: {
             borderColor: '#2a2e39',
             timeVisible: true,
             secondsVisible: false,
-            fixLeftEdge: false, // වම් කෙළවර හිරවීම වැළැක්වීමට false කරන ලදී
+            fixLeftEdge: false, // වම් කෙළවර හිරවීම වැළැක්වීමට false කර ඇත
         },
-        // --- Zoom සහ Scroll පහසුකම් නිවැරදිව ක්‍රියාත්මක වීමට ---
+        // --- Zoom සහ Scroll පහසුකම් සක්‍රීය කිරීම ---
         handleScroll: {
             mouseWheel: true,
             pressedMouseMove: true,
@@ -79,11 +83,11 @@ function initChart() {
     });
 
     candlestickSeries = chart.addCandlestickSeries({
-        upColor: '#26a69a',
-        downColor: '#ef5350',
+        upColor: '#089981',
+        downColor: '#f23645',
         borderVisible: false,
-        wickUpColor: '#26a69a',
-        wickDownColor: '#ef5350',
+        wickUpColor: '#089981',
+        wickDownColor: '#f23645',
     });
 
     window.chart = chart;
@@ -143,7 +147,6 @@ function setupEventListeners() {
             currentSymbol = e.target.value;
             window.currentSymbol = currentSymbol;
             
-            // Update UI Labels instantly
             const symbolLabel = document.getElementById('activeSymbolLabel');
             if (symbolLabel) symbolLabel.innerText = currentSymbol;
 
@@ -214,7 +217,6 @@ function setupEventListeners() {
     // Session Breaks Checkbox Event Listener Integration
     const sessionBreakCheckbox = document.getElementById('sessionBreakCheckbox');
     if (sessionBreakCheckbox) {
-        // Initial load state sync
         const savedState = localStorage.getItem('nexus_session_breaks') === 'true';
         sessionBreakCheckbox.checked = savedState;
 
@@ -249,7 +251,6 @@ function resetAndReload() {
     hasMoreData = true;
     activeWsConnectionId++;
     
-    // Close existing WebSocket immediately
     if (ws) {
         try {
             ws.onopen = null;
@@ -269,7 +270,6 @@ async function loadChartData(symbol, timeframe) {
     try {
         window.currentSymbol = symbol;
         
-        // සිම්බල් එක මාරු වන විට ප්‍රයිස් ස්කේල් එක සම්පූර්ණයෙන්ම අලුත් සිම්බල් එකට සකස් කර ගැනීම
         if (chart) {
             chart.priceScale('right').applyOptions({
                 autoScale: true,
@@ -297,7 +297,6 @@ async function loadChartData(symbol, timeframe) {
             candlestickSeries.setData(formattedData);
             chart.timeScale().fitContent();
             
-            // Connect to WebSocket immediately after setting historical data
             connectWebSocket(symbol, timeframe);
         }
 
@@ -351,7 +350,7 @@ async function loadMoreHistoricalData() {
     }
 }
 
-// 6. WebSocket Realtime Ticks (Instant Live Connection)
+// 6. WebSocket Realtime Ticks
 function connectWebSocket(symbol, timeframe) {
     const connectionId = ++activeWsConnectionId;
 
