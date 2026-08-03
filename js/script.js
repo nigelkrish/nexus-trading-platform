@@ -1,4 +1,4 @@
-// --- Nexus Trading Platform - Script.js (Fully Fixed Zoom, Scroll & Chart Integration) ---
+// --- Nexus Trading Platform - Script.js (Fixed Zoom, Scroll & Interactive Chart) ---
 
 let chart;
 let candlestickSeries;
@@ -29,19 +29,20 @@ document.addEventListener('DOMContentLoaded', () => {
     loadChartData(currentSymbol, currentTimeframe);
 });
 
-// 1. Chart Initialization with Full Zoom/Scroll Support
+// 1. Chart Initialization with Guaranteed Zoom & Scroll Support
 function initChart() {
     const container = document.getElementById('chartContainer');
     if (!container) return;
 
-    // කන්ටේනර් එකේ CSS ස්ටයිල් හරහා Zoom/Scroll බ්ලොක් වීම වැළැක්වීමට 
+    // කන්ටේනර් එකේ මවුස් ක්ලික් සහ ස්ක්‍රෝල් කිරීම් නිවැරදිව ලැබෙන බව තහවුරු කිරීමට
+    container.style.position = 'relative';
     container.style.pointerEvents = 'auto';
     container.style.overflow = 'hidden';
 
-    // localStorage වලින් කලින් සේව් කරගත් Session Breaks සැකසුම ලබා ගැනීම
     const savedSessionBreaks = localStorage.getItem('nexus_session_breaks') === 'true';
 
-    chart = LightweightCharts.createChart(container, {
+    // Chart Options Configuration
+    const chartOptions = {
         width: container.clientWidth,
         height: container.clientHeight,
         layout: {
@@ -66,21 +67,34 @@ function initChart() {
             borderColor: '#2a2e39',
             timeVisible: true,
             secondsVisible: false,
-            fixLeftEdge: false, // වම් කෙළවර හිරවීම වැළැක්වීමට false කර ඇත
-        },
-        // --- Zoom සහ Scroll පහසුකම් සක්‍රීය කිරීම ---
-        handleScroll: {
+            fixLeftEdge: false,
+        }
+    };
+
+    // Lightweight Charts වර්ෂන් එක මත පදනම්ව handleScroll / handleScale සක්‍රීය කිරීම
+    try {
+        chartOptions.handleScroll = {
             mouseWheel: true,
             pressedMouseMove: true,
             horzTouchDrag: true,
             vertTouchDrag: true,
-        },
-        handleScale: {
+        };
+        chartOptions.handleScale = {
             axisPressedMouseMove: true,
             mouseWheel: true,
             pinch: true,
-        },
-    });
+        };
+    } catch (e) {}
+
+    chart = LightweightCharts.createChart(container, chartOptions);
+
+    // පාදක වර්ෂන් වෙනස්කම් සඳහා වෙනම අප්ලයි කිරීම (Fallback Compatibility)
+    try {
+        chart.applyOptions({
+            handleScroll: { mouseWheel: true, pressedMouseMove: true },
+            handleScale: { axisPressedMouseMove: true, mouseWheel: true, pinch: true }
+        });
+    } catch (e) {}
 
     candlestickSeries = chart.addCandlestickSeries({
         upColor: '#089981',
