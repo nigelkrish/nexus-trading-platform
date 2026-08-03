@@ -315,7 +315,7 @@ async function loadMoreHistoricalData() {
     }
 }
 
-// 6. WebSocket Realtime Ticks
+// 6. WebSocket Realtime Ticks (Fixed with Lowercase Symbol)
 function connectWebSocket(symbol, timeframe) {
     const connectionId = ++activeWsConnectionId;
     if (ws) {
@@ -325,7 +325,8 @@ function connectWebSocket(symbol, timeframe) {
     
     if (isReplayMode) return;
 
-    const wsUrl = `wss://stream.binance.com/ws/${symbol.toLowerCase()}@kline_${timeframe}`;
+    const formattedSymbol = symbol.toLowerCase();
+    const wsUrl = `wss://stream.binance.com/ws/${formattedSymbol}@kline_${timeframe}`;
     
     try {
         const socket = new WebSocket(wsUrl);
