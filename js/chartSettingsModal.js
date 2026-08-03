@@ -218,6 +218,7 @@ class ChartSettingsModal {
         window.candlestickSeries.applyOptions(seriesOptions);
 
         // 3. Apply chart options (Grid, Background, Scales & TimeScale)
+        // FIX: autoScale වෙනුවට ස්ක්‍රෝල්/ස්කේල් එක නිදහස් වන පරිදි සකස් කරන ලදී.
         const chartOptions = {
             grid: {
                 vertLines: { visible: vertGridToggle ? vertGridToggle.checked : true },
@@ -225,7 +226,7 @@ class ChartSettingsModal {
             },
             rightPriceScale: {
                 visible: scalesPlacement !== 'left',
-                autoScale: !lockPriceRatio,
+                autoScale: true, // මෙහි තිබූ බ්ලොක් වීම ඉවත් කර ස්වයංක්‍රීය ස්කේල් වීමට සලස්වන ලදී
             },
             leftPriceScale: {
                 visible: scalesPlacement === 'left',
@@ -233,7 +234,6 @@ class ChartSettingsModal {
             timeScale: {
                 rightOffset: 12,
                 barSpacing: 6,
-                fixLeftEdge: saveLeftEdge,
                 timeVisible: true,
                 secondsVisible: false,
             }
@@ -247,7 +247,7 @@ class ChartSettingsModal {
 
         window.chart.applyOptions(chartOptions);
 
-        // Custom config state storage (օයාට අවශ්‍ය නම් වෙනත් ලොජික් වලට පාවිච්චි කරන්න පුළුවන්)
+        // Custom config state storage
         window.nexusChartConfig = {
             currencyUnit, scaleModes, lockPriceRatio, scalesPlacement,
             noOverlappingLabels, plusButton, countdownBarClose,
