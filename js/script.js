@@ -1,4 +1,4 @@
-// --- Nexus Trading Platform - Script.js (Complete, Fixed & Stable) ---
+// --- Nexus Trading Platform - Script.js (Complete, Fixed & Scrollable) ---
 
 let chart;
 let candlestickSeries;
@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadChartData(currentSymbol, currentTimeframe);
 });
 
-// 1. Chart Initialization with Full Zoom & Scroll Support
+// 1. Chart Initialization with Full Zoom, Scroll & Drag Support
 function initChart() {
     const container = document.getElementById('chartContainer');
     if (!container) return;
@@ -59,6 +59,10 @@ function initChart() {
             borderColor: '#2a2e39',
             autoScale: true,
             visible: true,
+            scaleMargins: {
+                top: 0.1,
+                bottom: 0.1,
+            },
         },
         timeScale: {
             borderColor: '#2a2e39',
@@ -67,7 +71,7 @@ function initChart() {
             fixLeftEdge: false,
             rightOffset: 5,
         },
-        // Zoom සහ Scroll කිරීමේ ක්‍රමවේදයන් සක්‍රීය කිරීම
+        // ස්ක්‍රෝල් කිරීම සහ මූව් කිරීම (Drag/Pan) සම්පූර්ණයෙන්ම සක්‍රීය කිරීම
         handleScroll: {
             mouseWheel: true,
             pressedMouseMove: true,
@@ -75,7 +79,10 @@ function initChart() {
             vertTouchDrag: true,
         },
         handleScale: {
-            axisPressedMouseMove: true,
+            axisPressedMouseMove: {
+                time: true,
+                price: true,
+            },
             mouseWheel: true,
             pinch: true,
         },
@@ -325,7 +332,7 @@ async function loadMoreHistoricalData() {
     }
 }
 
-// 6. Realtime Ticks via REST API Polling (Stable for all symbols like PAXGUSDT)
+// 6. Realtime Ticks via REST API Polling (Stable for all symbols)
 function connectWebSocket(symbol, timeframe) {
     const connectionId = ++activeWsConnectionId;
     
@@ -370,9 +377,7 @@ function connectWebSocket(symbol, timeframe) {
                     }
                 }
             }
-        } catch (err) {
-            // Network errors are safely ignored to prevent chart interruption
-        }
+        } catch (err) {}
     }, 1000);
 }
 
