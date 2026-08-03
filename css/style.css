@@ -620,3 +620,12 @@ select:hover, input:hover { border-color: var(--text-secondary); }
     justify-content: center;
     align-items: center;
 }
+
+#chartContainer {
+    pointer-events: auto !important;
+    touch-action: none;
+}
+
+#chartContainer canvas {
+    pointer-events: auto !important;
+}
