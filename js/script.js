@@ -1,10 +1,11 @@
-// --- Nexus Trading Platform - Script.js (Complete & Fixed) ---
+// --- Nexus Trading Platform - Script.js (Complete, Fixed & Stable) ---
 
 let chart;
 let candlestickSeries;
 let currentSymbol = 'BTCUSDT';
 let currentTimeframe = '1m';
 let ws = null;
+let pollingTimer = null;
 
 let oldestTimestamp = null;
 let isLoadingMore = false;
@@ -91,7 +92,7 @@ function initChart() {
     window.chart = chart;
     window.candlestickSeries = candlestickSeries;
 
-    // කෑන්වස් සහ කොන්ටේනර් එකට මවුස් ඊවෙන්ට්ස් නිවැරදිව ලැබෙන බව තහවුරු කිරීම සහ නිරන්තරයෙන් ෆෝර්ස් කිරීම
+    // කෑන්වස් සහ කොන්ටේනර් එකට මවුස් ඊවෙන්ට්ස් නිවැරදිව ලැබෙන බව තහවුරු කිරීම
     const enablePointerEvents = () => {
         container.style.pointerEvents = 'auto';
         const canvases = container.querySelectorAll('canvas');
@@ -239,6 +240,10 @@ function resetAndReload() {
         try { ws.close(); } catch (e) {}
         ws = null;
     }
+    if (pollingTimer) {
+        clearInterval(pollingTimer);
+        pollingTimer = null;
+    }
     loadChartData(currentSymbol, currentTimeframe);
 }
 
@@ -320,37 +325,43 @@ async function loadMoreHistoricalData() {
     }
 }
 
-// 6. WebSocket Realtime Ticks (Fixed with Lowercase Symbol)
+// 6. Realtime Ticks via REST API Polling (Stable for all symbols like PAXGUSDT)
 function connectWebSocket(symbol, timeframe) {
     const connectionId = ++activeWsConnectionId;
+    
     if (ws) {
         try { ws.close(); } catch (e) {}
         ws = null;
     }
+    if (pollingTimer) {
+        clearInterval(pollingTimer);
+        pollingTimer = null;
+    }
     
     if (isReplayMode) return;
 
-    const formattedSymbol = symbol.toLowerCase();
-    const wsUrl = `wss://stream.binance.com/ws/${formattedSymbol}@kline_${timeframe}`;
-    
-    try {
-        const socket = new WebSocket(wsUrl);
-        ws = socket;
+    pollingTimer = setInterval(async () => {
+        if (isReplayMode || connectionId !== activeWsConnectionId) {
+            clearInterval(pollingTimer);
+            return;
+        }
 
-        socket.onmessage = (event) => {
-            if (isReplayMode || ws !== socket || connectionId !== activeWsConnectionId) return;
-            try {
-                const message = JSON.parse(event.data);
-                if (message.k) {
-                    const kline = message.k;
-                    const candleData = {
-                        time: kline.t / 1000,
-                        open: parseFloat(kline.o),
-                        high: parseFloat(kline.h),
-                        low: parseFloat(kline.l),
-                        close: parseFloat(kline.c)
-                    };
+        try {
+            const url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${timeframe}&limit=2`;
+            const response = await fetch(url);
+            const data = await response.json();
 
+            if (data && data.length > 0 && !isReplayMode && connectionId === activeWsConnectionId) {
+                const latest = data[data.length - 1];
+                const candleData = {
+                    time: latest[0] / 1000,
+                    open: parseFloat(latest[1]),
+                    high: parseFloat(latest[2]),
+                    low: parseFloat(latest[3]),
+                    close: parseFloat(latest[4])
+                };
+
+                if (candlestickSeries) {
                     candlestickSeries.update(candleData);
                     updatePriceDisplay(candleData.close, candleData.open);
 
@@ -358,9 +369,11 @@ function connectWebSocket(symbol, timeframe) {
                         window.nexusAlerts.checkAlerts(candleData.close, currentSymbol);
                     }
                 }
-            } catch (err) {}
-        };
-    } catch (err) {}
+            }
+        } catch (err) {
+            // Network errors are safely ignored to prevent chart interruption
+        }
+    }, 1000);
 }
 
 // --- Bar Replay Interactive Functions ---
@@ -378,6 +391,10 @@ function activateReplayFromIndex(index) {
     if (ws) {
         try { ws.close(); } catch (e) {}
         ws = null;
+    }
+    if (pollingTimer) {
+        clearInterval(pollingTimer);
+        pollingTimer = null;
     }
 
     const toggleBtn = document.getElementById('replayToggleBtn');
